@@ -53,6 +53,7 @@ public class RegistroCompraService : IRegistroCompraService
             registro.Id,
             registro.InsumoId,
             insumo.Nome,
+            insumo.UnidadeMedida,
             registro.DataCompra,
             registro.Quantidade,
             registro.ValorTotal,
@@ -74,6 +75,7 @@ public class RegistroCompraService : IRegistroCompraService
             c.Id,
             c.InsumoId,
             insumo.Nome,
+            insumo.UnidadeMedida,
             c.DataCompra,
             c.Quantidade,
             c.ValorTotal,
@@ -124,4 +126,3 @@ public class RegistroCompraService : IRegistroCompraService
         await _unitOfWork.CommitAsync(cancellationToken);
     }
 }
-

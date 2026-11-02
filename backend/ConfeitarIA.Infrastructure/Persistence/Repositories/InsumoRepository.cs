@@ -1,4 +1,5 @@
 using ConfeitarIA.Domain.Entities;
+using ConfeitarIA.Domain.Models;
 using ConfeitarIA.Domain.Repositories;
 using ConfeitarIA.Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,31 @@ public class InsumoRepository : IInsumoRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<InsumoComCusto>> ListarComCustoAsync(bool? apenasAtivos = true, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Insumos.AsNoTracking();
+
+        if (apenasAtivos.HasValue)
+        {
+            query = query.Where(i => i.Ativo == apenasAtivos.Value);
+        }
+
+        var dados = await query
+            .OrderBy(i => i.Nome)
+            .Select(i => new
+            {
+                Insumo = i,
+                CustoUnitario = i.RegistrosCompra
+                    .OrderByDescending(r => r.DataCompra)
+                    .ThenByDescending(r => r.Id)
+                    .Select(r => (decimal?)r.ValorUnitario)
+                    .FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
+
+        return dados.Select(d => new InsumoComCusto(d.Insumo, d.CustoUnitario)).ToList();
+    }
+
     public async Task AdicionarAsync(Insumo insumo, CancellationToken cancellationToken = default)
     {
         await _context.Insumos.AddAsync(insumo, cancellationToken);
@@ -62,4 +88,3 @@ public class InsumoRepository : IInsumoRepository
         _context.Insumos.Update(insumo);
     }
 }
-
