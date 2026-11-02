@@ -22,7 +22,10 @@ O ConfeitarIA é uma aplicação desenvolvida para substituir o controle manual 
 
 | Camada | Tecnologia | Detalhes |
 |---|---|---|
-| **Frontend** | React 18 + TypeScript + Vite | Interface responsiva e visualização gráfica *(a inicializar)* |
+| **Frontend** | React 18 + TypeScript + Vite | Interface responsiva, com carregamento otimizado por página |
+| **Componentes visuais** | Material UI (MUI) | Componentes prontos, tema personalizado e navegação responsiva |
+| **Gráficos** | Recharts | Evolução do custo unitário dos últimos 12 meses |
+| **Consumo da API** | Axios | Comunicação com a API e tratamento de erros |
 | **Backend** | C# / .NET 8 Web API | Arquitetura DDD (Domain, Application, Infrastructure, API) |
 | **Banco de Dados** | PostgreSQL | Supabase, Neon ou PostgreSQL local |
 | **ORM** | Entity Framework Core 8 | Npgsql, Migrations e coluna calculada STORED |
@@ -65,12 +68,59 @@ ConfeitarIA/
 │   ├── ConfeitarIA.Application/        # Service / Casos de Uso: DTOs, Serviços e FluentValidation
 │   ├── ConfeitarIA.Infrastructure/     # Persistência / EF Core 8: DbContext, Migrations e Npgsql
 │   └── ConfeitarIA.API/                # Controller / Apresentação: Endpoints, Swagger UI e Middlewares
-├── frontend/                           # Interface React 18 + TS + Vite (a inicializar)
+├── frontend/                           # Interface React 18 + TS + Vite
+│   ├── src/
+│   │   ├── components/                 # Layout, formulários, tabelas, gráfico e estados
+│   │   ├── hooks/                      # Hooks reutilizáveis
+│   │   ├── pages/                      # Insumos, compras e detalhes do insumo
+│   │   ├── services/                   # Axios e chamadas à API
+│   │   ├── types/                      # Tipos de insumos, compras e gráfico
+│   │   ├── utils/                      # Formatação de datas e valores
+│   │   ├── App.tsx                     # Rotas da aplicação
+│   │   └── theme.ts                    # Tema e paleta do MUI
+│   ├── package.json
+│   └── vite.config.ts
 ├── docs/                               # Documentação técnica e especificações
 │   └── SDD-Fase1.md                    # Especificação de Detalhamento de Software (Fase 1)
 ├── README.md                           # Este arquivo
 └── .gitignore
 ```
+
+---
+
+## Frontend — Execução
+
+### Pré-requisitos
+- [Node.js](https://nodejs.org/) instalado
+- API do backend em execução na porta `5000`
+
+### Instalar dependências e iniciar
+Na raiz do projeto:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+O Vite disponibiliza a aplicação em [http://localhost:5173](http://localhost:5173).
+
+Por padrão, o frontend consome a API em `http://localhost:5000/api`. Para utilizar outro endereço, defina `VITE_API_URL` em `frontend/.env.local`, por exemplo:
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+### Gerar build de produção
+```bash
+cd frontend
+npm run build
+```
+
+### Funcionalidades disponíveis
+- Listagem de insumos com filtros por ativos, inativos ou todos
+- Cadastro, edição, inativação e reativação de insumos
+- Registro de compras de insumos ativos; o valor unitário é calculado pela API
+- Detalhes do insumo com custo atual, última compra, histórico e gráfico de preços dos últimos 12 meses
+- Exclusão de compras individuais, mantendo o insumo e os demais registros
+- Layout responsivo para celular e laptop, com mensagens de carregamento e erro
 
 ---
 
@@ -118,19 +168,19 @@ Com a API em execução, o navegador abrirá automaticamente ou você poderá ac
 ### Insumos (`/api/insumos`)
 | Método | Rota | Descrição |
 |---|---|---|
-| `GET` | `/api/insumos?status=ativos` | Lista insumos cadastrados (filtro: `ativos`, `inativos` ou `todos`) |
+| `GET` | `/api/insumos?status=ativos` | Lista insumos cadastrados incluindo o custo unitário da última compra (`custoUnitario`) (filtro: `ativos`, `inativos` ou `todos`) |
 | `POST` | `/api/insumos` | Cadastra novo insumo (validação de unicidade de nome) |
-| `GET` | `/api/insumos/{id}` | Detalhes do insumo com valor unitário atual e última compra |
+| `GET` | `/api/insumos/{id}` | Detalhes do insumo com custo unitário atual e dados da última compra (com `unidadeMedida`) |
 | `PUT` | `/api/insumos/{id}` | Atualiza nome e unidade de medida do insumo |
 | `DELETE` | `/api/insumos/{id}` | Inativação lógica (*soft delete*, nunca exclusão física) |
 | `PATCH` | `/api/insumos/{id}/reativar` | Restaura insumo para status ativo |
-| `GET` | `/api/insumos/{id}/compras` | Histórico cronológico de compras vinculadas |
+| `GET` | `/api/insumos/{id}/compras` | Histórico cronológico de compras vinculadas incluindo unidade de medida (`unidadeMedida`) e custo unitário |
 | `GET` | `/api/insumos/{id}/grafico-precos` | Série temporal de preços nos últimos 12 meses |
 
 ### Compras (`/api/compras`)
 | Método | Rota | Descrição |
 |---|---|---|
-| `POST` | `/api/compras` | Registra compra (valor unitário calculado no banco: `valor_total / quantidade`) |
+| `POST` | `/api/compras` | Registra compra vinculada com unidade de medida (valor unitário calculado no banco: `valor_total / quantidade`) |
 | `DELETE` | `/api/compras/{id}` | Exclui registro individual de compra (preserva o insumo) |
 
 ---
