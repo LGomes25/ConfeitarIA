@@ -42,7 +42,7 @@ public class InsumoService : IInsumoService
         await _insumoRepository.AdicionarAsync(insumo, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
 
-        return MapearParaDto(insumo);
+        return MapearParaDto(insumo, null);
     }
 
     public async Task<InsumoDto> AtualizarAsync(int id, AtualizarInsumoRequest request, CancellationToken cancellationToken = default)
@@ -61,13 +61,14 @@ public class InsumoService : IInsumoService
         _insumoRepository.Atualizar(insumo);
         await _unitOfWork.CommitAsync(cancellationToken);
 
-        return MapearParaDto(insumo);
+        var ultimoRegistro = await _registroCompraRepository.ObterUltimoRegistroAsync(id, cancellationToken);
+        return MapearParaDto(insumo, ultimoRegistro?.ValorUnitario);
     }
 
     public async Task<IReadOnlyList<InsumoDto>> ListarAsync(bool? apenasAtivos = true, CancellationToken cancellationToken = default)
     {
-        var insumos = await _insumoRepository.ListarAsync(apenasAtivos, cancellationToken);
-        return insumos.Select(MapearParaDto).ToList();
+        var insumosComCusto = await _insumoRepository.ListarComCustoAsync(apenasAtivos, cancellationToken);
+        return insumosComCusto.Select(x => MapearParaDto(x.Insumo, x.CustoUnitario)).ToList();
     }
 
     public async Task<InsumoDetalheDto> ObterDetalhePorIdAsync(int id, CancellationToken cancellationToken = default)
@@ -79,7 +80,7 @@ public class InsumoService : IInsumoService
         var ultimoRegistro = await _registroCompraRepository.ObterUltimoRegistroAsync(id, cancellationToken);
 
         UltimoRegistroCompraDto? ultimoDto = null;
-        decimal? valorUnitarioAtual = null;
+        decimal? custoUnitario = null;
 
         if (ultimoRegistro is not null)
         {
@@ -87,11 +88,12 @@ public class InsumoService : IInsumoService
                 ultimoRegistro.Id,
                 ultimoRegistro.DataCompra,
                 ultimoRegistro.Quantidade,
+                insumo.UnidadeMedida,
                 ultimoRegistro.ValorTotal,
                 ultimoRegistro.ValorUnitario,
                 ultimoRegistro.Fornecedor
             );
-            valorUnitarioAtual = ultimoRegistro.ValorUnitario;
+            custoUnitario = ultimoRegistro.ValorUnitario;
         }
 
         return new InsumoDetalheDto(
@@ -100,7 +102,7 @@ public class InsumoService : IInsumoService
             insumo.UnidadeMedida,
             insumo.Ativo,
             insumo.DataCriacao,
-            valorUnitarioAtual,
+            custoUnitario,
             ultimoDto
         );
     }
@@ -127,7 +129,6 @@ public class InsumoService : IInsumoService
         await _unitOfWork.CommitAsync(cancellationToken);
     }
 
-    private static InsumoDto MapearParaDto(Insumo insumo) =>
-        new(insumo.Id, insumo.Nome, insumo.UnidadeMedida, insumo.Ativo, insumo.DataCriacao);
+    private static InsumoDto MapearParaDto(Insumo insumo, decimal? custoUnitario) =>
+        new(insumo.Id, insumo.Nome, insumo.UnidadeMedida, insumo.Ativo, custoUnitario, insumo.DataCriacao);
 }
-
