@@ -1,0 +1,6 @@
+@ConfeitarIA.API_HostAddress = http://localhost:5073
+
+GET {{ConfeitarIA.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
