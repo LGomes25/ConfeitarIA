@@ -1,0 +1,25 @@
+# Dependências
+node_modules/
+bin/
+obj/
+
+# Variáveis e segredos
+.env
+.env.*
+appsettings.*.json
+!appsettings.json
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# Logs
+*.log
+dist/
+build/
