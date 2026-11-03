@@ -10,7 +10,6 @@ import { comprasService } from '../services/comprasService';
 import { getApiErrorMessage } from '../services/api';
 import { useAsyncData } from '../hooks/useAsyncData';
 import type { CompraFormData } from '../types/compra';
-import { formatCurrency, formatDate } from '../utils/format';
 
 export function ComprasPage() {
   const [saving, setSaving] = useState(false);
@@ -24,10 +23,10 @@ export function ComprasPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const compra = await comprasService.registrar(data);
+      await comprasService.registrar(data);
       setMessage({
         severity: 'success',
-        text: `Compra registrada em ${formatDate(compra.dataCompra)}. Custo unitário calculado: ${formatCurrency(compra.valorUnitario)}.`,
+        text: 'Compra registrada com sucesso.',
       });
       return true;
     } catch (cause: unknown) {

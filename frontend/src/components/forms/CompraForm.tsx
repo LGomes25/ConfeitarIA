@@ -1,14 +1,17 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Alert,
   Box,
   Button,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import type { Insumo } from '../../types/insumo';
 import type { CompraFormData } from '../../types/compra';
 import { todayAsInputValue } from '../../utils/format';
@@ -33,15 +36,19 @@ export function CompraForm({
   const [quantidade, setQuantidade] = useState('');
   const [valorTotal, setValorTotal] = useState('');
   const [fornecedor, setFornecedor] = useState('');
+  const initialSelectionApplied = useRef(false);
   const activeInsumos = insumos.filter((insumo) => insumo.ativo);
 
   useEffect(() => {
+    if (initialSelectionApplied.current) return;
+
     if (
       !insumoId &&
       initialInsumoId &&
       insumos.some((insumo) => insumo.ativo && String(insumo.id) === initialInsumoId)
     ) {
       setInsumoId(initialInsumoId);
+      initialSelectionApplied.current = true;
     }
   }, [initialInsumoId, insumoId, insumos]);
 
@@ -55,6 +62,9 @@ export function CompraForm({
       fornecedor: fornecedor.trim(),
     });
     if (saved) {
+      initialSelectionApplied.current = true;
+      setInsumoId('');
+      setDataCompra(todayAsInputValue());
       setQuantidade('');
       setValorTotal('');
       setFornecedor('');
@@ -78,6 +88,9 @@ export function CompraForm({
           disabled={loading || activeInsumos.length === 0}
           fullWidth
         >
+          <MenuItem value="" disabled>
+            Insumo*
+          </MenuItem>
           {activeInsumos.map((insumo) => (
             <MenuItem key={insumo.id} value={insumo.id}>
               {insumo.nome} ({insumo.unidadeMedida})
@@ -100,18 +113,41 @@ export function CompraForm({
             type="number"
             value={quantidade}
             onChange={(event) => setQuantidade(event.target.value)}
-            inputProps={{ min: '0.0001', step: '0.0001' }}
-            helperText="Informe a quantidade na unidade do insumo."
+            inputProps={{ min: '0.0001', step: 'any' }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="Diminuir quantidade em uma unidade"
+                    disabled={!quantidade || Number(quantidade) <= 1}
+                    onClick={() => setQuantidade(String(Number(quantidade) - 1))}
+                    edge="end"
+                    size="small"
+                  >
+                    <RemoveRoundedIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    aria-label="Aumentar quantidade em uma unidade"
+                    onClick={() => setQuantidade(String((Number(quantidade) || 0) + 1))}
+                    edge="end"
+                    size="small"
+                  >
+                    <AddRoundedIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            helperText="Informe a quantidade adquirida nesta compra."
             required
             fullWidth
           />
           <TextField
-            label="Valor total"
+            label="Valor Total (R$)"
             type="number"
             value={valorTotal}
             onChange={(event) => setValorTotal(event.target.value)}
             inputProps={{ min: '0', step: '0.01' }}
-            helperText="O custo unitário é calculado pela API."
+            helperText="Informe o valor gasto neste item."
             required
             fullWidth
           />
