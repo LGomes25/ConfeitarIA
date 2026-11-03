@@ -170,7 +170,10 @@ export function InsumoDetalhePage() {
                   Valor unitário registrado em cada compra nos últimos 12 meses.
                 </Typography>
               </Box>
-              <EvolucaoPrecosChart pontos={data.grafico.pontos} />
+              <EvolucaoPrecosChart
+                pontos={data.grafico.pontos}
+                unidadeMedida={insumo?.unidadeMedida ?? data.grafico.unidadeMedida}
+              />
             </Paper>
 
             <Paper elevation={1} sx={{ p: { xs: 1.5, sm: 2.5 } }}>

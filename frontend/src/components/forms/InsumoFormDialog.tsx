@@ -5,10 +5,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material';
 import type { Insumo, InsumoFormData } from '../../types/insumo';
+
+const unidadesMedida = ['centimetro', 'metro', 'grama', 'ml', 'rolo', 'unidade'];
 
 interface InsumoFormDialogProps {
   open: boolean;
@@ -30,7 +34,8 @@ export function InsumoFormDialog({
 
   useEffect(() => {
     setNome(insumo?.nome ?? '');
-    setUnidadeMedida(insumo?.unidadeMedida ?? '');
+    const unidadeAtual = insumo?.unidadeMedida.toLowerCase() ?? '';
+    setUnidadeMedida(unidadesMedida.includes(unidadeAtual) ? unidadeAtual : '');
   }, [insumo, open]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -54,14 +59,28 @@ export function InsumoFormDialog({
               fullWidth
             />
             <TextField
+              select
               label="Unidade de medida"
-              placeholder="Ex.: kg, g, L, unidade"
               value={unidadeMedida}
               onChange={(event) => setUnidadeMedida(event.target.value)}
               required
-              inputProps={{ maxLength: 20 }}
               fullWidth
-            />
+            >
+              <MenuItem value="" disabled>
+                Selecione uma unidade
+              </MenuItem>
+              {unidadesMedida.map((unidade) => (
+                <MenuItem key={unidade} value={unidade}>
+                  {unidade}
+                </MenuItem>
+              ))}
+            </TextField>
+            {insumo && !unidadesMedida.includes(insumo.unidadeMedida.toLowerCase()) && (
+              <Typography color="warning.main" variant="caption">
+                A unidade atual ({insumo.unidadeMedida}) não está na lista. Selecione uma unidade
+                disponível para salvar.
+              </Typography>
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
