@@ -1,6 +1,10 @@
 using ConfeitarIA.Domain.Repositories;
+using ConfeitarIA.Application.Interfaces;
+using ConfeitarIA.Infrastructure.Notifications;
+using ConfeitarIA.Infrastructure.Persistence.Entities;
 using ConfeitarIA.Infrastructure.Persistence.Context;
 using ConfeitarIA.Infrastructure.Persistence.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +21,25 @@ public static class DependencyInjection
         services.AddDbContext<ConfeitarIADbContext>(options =>
             options.UseNpgsql(connectionString));
 
+        services.AddIdentityCore<ApplicationUser>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.SignIn.RequireConfirmedEmail = false;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+                options.Lockout.AllowedForNewUsers = true;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireNonAlphanumeric = false;
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<ConfeitarIADbContext>()
+            .AddDefaultTokenProviders();
+
+        services.AddHttpClient();
+        services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IInsumoRepository, InsumoRepository>();
         services.AddScoped<IRegistroCompraRepository, RegistroCompraRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -24,4 +47,3 @@ public static class DependencyInjection
         return services;
     }
 }
-

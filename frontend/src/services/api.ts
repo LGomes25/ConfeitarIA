@@ -5,6 +5,19 @@ export const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string | null): void {
+  accessToken = token;
+}
+
+api.interceptors.request.use((config) => {
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return config;
+});
+
 export function getApiErrorMessage(error: unknown): string {
   if (!axios.isAxiosError(error)) {
     return 'Ocorreu um erro inesperado. Tente novamente.';
@@ -19,6 +32,7 @@ export function getApiErrorMessage(error: unknown): string {
     const body = data as Record<string, unknown>;
     if (typeof body.detail === 'string') return body.detail;
     if (typeof body.title === 'string') return body.title;
+    if (typeof body.mensagem === 'string') return body.mensagem;
 
     const validationErrors = body.errors;
     if (typeof validationErrors === 'object' && validationErrors !== null) {

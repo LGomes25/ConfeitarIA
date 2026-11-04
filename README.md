@@ -43,15 +43,14 @@ O ConfeitarIA é uma aplicação desenvolvida para substituir o controle manual 
 
 | Fase | Período | Foco Principal |
 |---|---|---|
-| **Fase 1** | Em desenvolvimento | Gestão de insumos, histórico de compras, evolução de preços e importação de dados |
-| **Fase 2** | A definir | Segurança, usuários e permissões |
+| **Fase 1** | Mantida | Gestão de insumos, histórico de compras, evolução de preços e importação de dados |
+| **Fase 2** | Implementada | Autenticação, usuários e permissões |
 | **Fase 3** | A definir | Cadastro de produtos e composição de custos |
 | **Fase 4** | A definir | Pedidos, clientes e operação de vendas |
 | **Fase 5** | A definir | Painéis gerenciais e relatórios |
 | **Fase 6** | A definir | Funcionalidades avançadas e integrações |
 
-> Cada fase será detalhada em documento próprio quando iniciada.
-> A Fase 1 é a única ativa no momento — escopo fechado.
+> A Fase 2 adiciona autenticação sem remover ou recriar os dados da Fase 1.
 
 ---
 
@@ -81,7 +80,9 @@ ConfeitarIA/
 │   ├── package.json
 │   └── vite.config.ts
 ├── docs/                               # Documentação técnica e especificações
-│   └── SDD-Fase1.md                    # Especificação de Detalhamento de Software (Fase 1)
+│   ├── SDD-Fase1.md                    # Especificação de Detalhamento de Software (Fase 1)
+│   ├── SDD-Fase2.md                    # Especificação de autenticação e permissões
+│   └── Fase2-Instrucoes.md              # Regras complementares da Fase 2
 ├── README.md                           # Este arquivo
 └── .gitignore
 ```
@@ -121,6 +122,9 @@ npm run build
 - Detalhes do insumo com custo atual, última compra, histórico e gráfico de preços dos últimos 12 meses
 - Exclusão de compras individuais, mantendo o insumo e os demais registros
 - Layout responsivo para celular e laptop, com mensagens de carregamento e erro
+- Cadastro e login por email ou telefone, perfil pessoal e endereços
+- Administração de usuários, perfis, bloqueios e senha temporária
+- Access/refresh tokens mantidos somente em memória no navegador
 
 ---
 
@@ -138,6 +142,16 @@ A string de conexão padrão encontra-se em `backend/ConfeitarIA.API/appsettings
   "DefaultConnection": "Host=localhost;Port=5432;Database=confeitaria_dev;Username=postgres;Password=postgres"
 }
 ```
+
+### Autenticação e notificações (Fase 2)
+- Em desenvolvimento, a API gera uma chave JWT efêmera se `Jwt:Secret` não estiver definida. As sessões expiram quando a API reinicia.
+- Em outros ambientes, configure `Jwt__Secret` como variável de ambiente (mínimo 32 bytes). Nunca versione esse segredo.
+- No primeiro início após a migration, um Admin é criado com email `admin@confeitaria.local`; a senha temporária é exibida uma única vez no console da API e deve ser alterada no primeiro acesso.
+- O envio de recuperação por email exige `Notifications__Email__SmtpHost`, `Notifications__Email__Sender` e os demais parâmetros SMTP. Configure credenciais via ambiente, não em arquivos versionados.
+- O adaptador WhatsApp envia `{ "to": "...", "message": "..." }` para `Notifications__WhatsApp__Endpoint`, com bearer token em `Notifications__WhatsApp__AccessToken`.
+- Sem um provedor configurado, o endpoint de recuperação informa erro de envio; configure os canais antes de habilitar recuperação em produção.
+
+As configurações correspondentes e os valores padrão não secretos estão em `backend/ConfeitarIA.API/appsettings.json`.
 
 ### Aplicar as Migrações
 Navegue até a pasta `backend/` e execute:
@@ -187,6 +201,7 @@ Com a API em execução, o navegador abrirá automaticamente ou você poderá ac
 
 ## Documentação Complementar
 - 📋 **Regras de Negócio e Modelo de Dados** → em `docs/SDD-Fase1.md`
+- 🔐 **Autenticação e permissões** → em `docs/SDD-Fase2.md` e `docs/Fase2-Instrucoes.md`
 - 📋 **Histórico de Requisitos** → em `docs/requisitos-fase1.md`
 
 ---
