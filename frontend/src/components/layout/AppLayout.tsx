@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   AppBar,
   Box,
+  Button,
   Drawer,
   IconButton,
   List,
@@ -16,6 +17,9 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import { useAuth } from '../../context/AuthContext';
 
 const drawerWidth = 250;
 const navigationItems = [
@@ -23,7 +27,7 @@ const navigationItems = [
   { label: 'Compras', path: '/compras', icon: <ReceiptLongOutlinedIcon /> },
 ];
 
-function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
+function NavigationContent({ onNavigate, items }: { onNavigate?: () => void; items: typeof navigationItems }) {
   return (
     <Box sx={{ px: 2, py: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.3, px: 1.3, py: 1.5, mb: 2.5 }}>
@@ -57,7 +61,7 @@ function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
         MENU PRINCIPAL
       </Typography>
       <List sx={{ mt: 0.7 }}>
-        {navigationItems.map((item) => (
+        {items.map((item) => (
           <ListItemButton
             key={item.path}
             component={NavLink}
@@ -100,7 +104,22 @@ function NavigationContent({ onNavigate }: { onNavigate?: () => void }) {
 export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const pageName = location.pathname.startsWith('/compras') ? 'Compras' : 'Insumos';
+  const { sessao, sair } = useAuth();
+  const isOperationalUser = sessao?.usuario.perfis.some((role) => role === 'Admin' || role === 'Manager') ?? false;
+  const items = [
+    ...(isOperationalUser ? navigationItems : []),
+    { label: 'Meu perfil', path: '/perfil', icon: <AccountCircleOutlinedIcon /> },
+    ...(sessao?.usuario.perfis.includes('Admin')
+      ? [{ label: 'Usuários', path: '/admin/usuarios', icon: <AdminPanelSettingsOutlinedIcon /> }]
+      : []),
+  ];
+  const pageName = location.pathname.startsWith('/compras')
+    ? 'Compras'
+    : location.pathname.startsWith('/perfil')
+      ? 'Meu perfil'
+      : location.pathname.startsWith('/admin')
+        ? 'Usuários'
+        : 'Insumos';
   const closeMobile = () => setMobileOpen(false);
 
   return (
@@ -126,13 +145,13 @@ export function AppLayout() {
           >
             <MenuRoundedIcon />
           </IconButton>
-          <Typography color="text.secondary" fontSize={14}>
-            {pageName}
-          </Typography>
+          <Typography color="text.secondary" fontSize={14}>{pageName}</Typography>
           <Box sx={{ flex: 1 }} />
           <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
-            Feito com carinho para sua confeitaria
+            {sessao?.usuario.nomeApelido}
           </Typography>
+          <Button component={NavLink} to="/perfil" size="small" sx={{ ml: 1 }}>Perfil</Button>
+          <Button onClick={() => void sair()} size="small">Sair</Button>
         </Toolbar>
       </AppBar>
 
@@ -147,7 +166,7 @@ export function AppLayout() {
             '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
           }}
         >
-          <NavigationContent onNavigate={closeMobile} />
+          <NavigationContent onNavigate={closeMobile} items={items} />
         </Drawer>
         <Drawer
           variant="permanent"
@@ -162,7 +181,7 @@ export function AppLayout() {
             },
           }}
         >
-          <NavigationContent />
+          <NavigationContent items={items} />
         </Drawer>
       </Box>
 

@@ -1,10 +1,12 @@
 using ConfeitarIA.Application.DTOs;
 using ConfeitarIA.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ConfeitarIA.API.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin,Manager")]
 [Route("api/[controller]")]
 [Produces("application/json")]
 public class InsumosController : ControllerBase
@@ -153,4 +155,3 @@ public class InsumosController : ControllerBase
         return Ok(dadosGrafico);
     }
 }
-
