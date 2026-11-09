@@ -44,13 +44,18 @@ O ConfeitarIA é uma aplicação desenvolvida para substituir o controle manual 
 | Fase | Período | Foco Principal |
 |---|---|---|
 | **Fase 1** | Mantida | Gestão de insumos, histórico de compras, evolução de preços e importação de dados |
-| **Fase 2** | Implementada | Autenticação, usuários e permissões |
-| **Fase 3** | A definir | Cadastro de produtos e composição de custos |
-| **Fase 4** | A definir | Pedidos, clientes e operação de vendas |
-| **Fase 5** | A definir | Painéis gerenciais e relatórios |
-| **Fase 6** | A definir | Funcionalidades avançadas e integrações |
+| **Fase 2** | Mantida | Autenticação, usuários e permissões |
+| **Fase 3** | Implementada | Navegação pública, vitrine e estrutura de apresentação |
+| **Fase 4** | A definir | Cadastro de produtos e composição de custos |
+| **Fase 5** | A definir | Pedidos, clientes e operação de vendas |
+| **Fase 6** | A definir | Painéis gerenciais, relatórios e integrações |
 
-> A Fase 2 adiciona autenticação sem remover ou recriar os dados da Fase 1.
+> A Fase 3 adiciona navegação pública e acolhedora sem login obrigatório. Ao autenticar, a barra lateral é habilitada automaticamente para os perfis operacionais (`Admin`, `Manager` e `Team`) e permanece desabilitada para o perfil `Customer` e visitantes:
+> - **`Admin`:** Acesso total a Insumos, Compras, Gestão de Usuários e Meu Perfil (barra lateral habilitada).
+> - **`Manager`:** Acesso a Insumos, Compras e Meu Perfil (barra lateral habilitada).
+> - **`Team`:** Barra lateral habilitada com Meu Perfil; preparado para a futura página de Receitas (sem acesso a Insumos e Compras).
+> - **`Customer`:** Acesso ao Meu Perfil com navegação pública limpa (barra lateral sempre desabilitada).
+> - **Visitante (deslogado):** Acesso às páginas institucionais e vitrine (barra lateral sempre desabilitada).
 
 ---
 
@@ -202,6 +207,7 @@ Com a API em execução, o navegador abrirá automaticamente ou você poderá ac
 ## Documentação Complementar
 - 📋 **Regras de Negócio e Modelo de Dados** → em `docs/SDD-Fase1.md`
 - 🔐 **Autenticação e permissões** → em `docs/SDD-Fase2.md` e `docs/Fase2-Instrucoes.md`
+- 🍰 **Navegação pública e vitrine** → em `docs/SDD-Fase3.md` e `docs/Fase3-Instrucoes.md`
 - 📋 **Histórico de Requisitos** → em `docs/requisitos-fase1.md`
 
 ---
