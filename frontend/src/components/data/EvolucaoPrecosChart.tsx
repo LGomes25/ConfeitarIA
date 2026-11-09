@@ -22,6 +22,7 @@ function multiplicadorInicial(unidadeMedida: string): number {
   const unidade = unidadeMedida.toLowerCase();
   if (unidade === 'grama' || unidade === 'ml') return 1000;
   if (unidade === 'centimetro') return 100;
+  if (unidade === 'minuto') return 60;
   return 1;
 }
 
@@ -30,9 +31,11 @@ function unidadeExibida(unidadeMedida: string, multiplicador: number): string {
   if (unidade === 'grama' && multiplicador === 1000) return 'kg';
   if (unidade === 'ml' && multiplicador === 1000) return 'L';
   if (unidade === 'centimetro' && multiplicador === 100) return 'metro';
+  if (unidade === 'minuto' && multiplicador === 60) return 'hora';
   if (unidade === 'grama') return `${multiplicador.toLocaleString('pt-BR')} g`;
   if (unidade === 'ml') return `${multiplicador.toLocaleString('pt-BR')} ml`;
   if (unidade === 'centimetro') return `${multiplicador.toLocaleString('pt-BR')} cm`;
+  if (unidade === 'minuto') return `${multiplicador.toLocaleString('pt-BR')} min`;
   return multiplicador === 1
     ? unidadeMedida
     : `${multiplicador.toLocaleString('pt-BR')} ${unidadeMedida}`;

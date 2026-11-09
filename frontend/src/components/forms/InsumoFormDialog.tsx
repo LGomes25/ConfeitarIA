@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import type { Insumo, InsumoFormData } from '../../types/insumo';
 
-const unidadesMedida = ['centimetro', 'metro', 'grama', 'ml', 'rolo', 'unidade'];
+const unidadesMedida = ['centimetro', 'metro', 'grama', 'minuto','ml', 'rolo', 'unidade'];
 
 interface InsumoFormDialogProps {
   open: boolean;

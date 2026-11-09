@@ -1,11 +1,8 @@
-import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useState, type ReactNode } from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
 import {
-  AppBar,
   Box,
-  Button,
   Drawer,
-  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -13,13 +10,13 @@ import {
   Toolbar,
   Typography,
 } from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import { useAuth } from '../../context/AuthContext';
+import { Header } from './Header';
 
 const drawerWidth = 250;
 const navigationItems = [
@@ -101,94 +98,104 @@ function NavigationContent({ onNavigate, items }: { onNavigate?: () => void; ite
   );
 }
 
-export function AppLayout() {
+export interface AppLayoutProps {
+  children?: ReactNode;
+  mostrarBarraLateral?: boolean;
+}
+
+export function AppLayout({ children, mostrarBarraLateral }: AppLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const location = useLocation();
-  const { sessao, sair } = useAuth();
-  const isOperationalUser = sessao?.usuario.perfis.some((role) => role === 'Admin' || role === 'Manager') ?? false;
+  const { sessao } = useAuth();
+
+  // Perfis autorizados a visualizar a barra lateral: Admin, Manager e Team
+  const temPerfilBarraLateral = sessao?.usuario.perfis.some((role) => {
+    const r = role.toLowerCase();
+    return r === 'admin' || r === 'manager' || r === 'team';
+  }) ?? false;
+
+  // Regra fundamental:
+  // - Usuário deslogado: sidebar desabilitada (false)
+  // - Perfil Customer: sidebar SEMPRE desabilitada (false)
+  // - Perfis Admin, Manager e Team: sidebar HABILITADA ao fazer login (true)
+  const exibirBarraLateral = Boolean(sessao && temPerfilBarraLateral && (mostrarBarraLateral ?? true));
+
+  // Insumos e Compras: exclusivos para Admin e Manager (Team NÃO tem acesso a insumos/compras)
+  const canAccessInsumosCompras = sessao?.usuario.perfis.some((role) => {
+    const r = role.toLowerCase();
+    return r === 'admin' || r === 'manager';
+  }) ?? false;
+  const isAdmin = sessao?.usuario.perfis.some((role) => role.toLowerCase() === 'admin') ?? false;
+
   const items = [
-    ...(isOperationalUser ? navigationItems : []),
+    ...(canAccessInsumosCompras ? navigationItems : []),
     { label: 'Meu perfil', path: '/perfil', icon: <AccountCircleOutlinedIcon /> },
-    ...(sessao?.usuario.perfis.includes('Admin')
+    ...(isAdmin
       ? [{ label: 'Usuários', path: '/admin/usuarios', icon: <AdminPanelSettingsOutlinedIcon /> }]
       : []),
   ];
-  const pageName = location.pathname.startsWith('/compras')
-    ? 'Compras'
-    : location.pathname.startsWith('/perfil')
-      ? 'Meu perfil'
-      : location.pathname.startsWith('/admin')
-        ? 'Usuários'
-        : 'Insumos';
+
   const closeMobile = () => setMobileOpen(false);
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <AppBar
-        position="fixed"
-        color="inherit"
-        elevation={0}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      {/* Cabeçalho unificado com controle da barra lateral */}
+      <Header
+        mostrarBarraLateral={exibirBarraLateral}
+        onAbrirBarraLateral={() => setMobileOpen(true)}
+        drawerWidth={drawerWidth}
+      />
+
+      {/* Barra lateral condicional — visível apenas se exibirBarraLateral for true */}
+      {exibirBarraLateral && (
+        <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
+          <Drawer
+            variant="temporary"
+            open={mobileOpen}
+            onClose={closeMobile}
+            ModalProps={{ keepMounted: true }}
+            sx={{
+              display: { xs: 'block', md: 'none' },
+              '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
+            }}
+          >
+            <NavigationContent onNavigate={closeMobile} items={items} />
+          </Drawer>
+          <Drawer
+            variant="permanent"
+            open
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              '& .MuiDrawer-paper': {
+                width: drawerWidth,
+                boxSizing: 'border-box',
+                borderRight: '1px solid #f0e7e0',
+                bgcolor: '#fffdfb',
+              },
+            }}
+          >
+            <NavigationContent items={items} />
+          </Drawer>
+        </Box>
+      )}
+
+      {/* Conteúdo principal */}
+      <Box
+        component="main"
         sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'rgba(255, 250, 245, 0.92)',
-          backdropFilter: 'blur(12px)',
+          flexGrow: 1,
+          minWidth: 0,
+          width: exibirBarraLateral ? { md: `calc(100% - ${drawerWidth}px)` } : '100%',
         }}
       >
-        <Toolbar sx={{ minHeight: '68px !important', px: { xs: 2, md: 4 } }}>
-          <IconButton
-            onClick={() => setMobileOpen(true)}
-            aria-label="Abrir menu"
-            sx={{ display: { md: 'none' }, mr: 1 }}
-          >
-            <MenuRoundedIcon />
-          </IconButton>
-          <Typography color="text.secondary" fontSize={14}>{pageName}</Typography>
-          <Box sx={{ flex: 1 }} />
-          <Typography sx={{ fontSize: 13, color: 'text.secondary', display: { xs: 'none', sm: 'block' } }}>
-            {sessao?.usuario.nomeApelido}
-          </Typography>
-          <Button component={NavLink} to="/perfil" size="small" sx={{ ml: 1 }}>Perfil</Button>
-          <Button onClick={() => void sair()} size="small">Sair</Button>
-        </Toolbar>
-      </AppBar>
-
-      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={closeMobile}
-          ModalProps={{ keepMounted: true }}
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
-          }}
-        >
-          <NavigationContent onNavigate={closeMobile} items={items} />
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          open
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              boxSizing: 'border-box',
-              borderRight: '1px solid #f0e7e0',
-              bgcolor: '#fffdfb',
-            },
-          }}
-        >
-          <NavigationContent items={items} />
-        </Drawer>
-      </Box>
-
-      <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
         <Toolbar sx={{ minHeight: '68px !important' }} />
-        <Box sx={{ maxWidth: 1440, mx: 'auto', p: { xs: 2, sm: 3, lg: 4 } }}>
-          <Outlet />
+        <Box
+          sx={{
+            maxWidth: exibirBarraLateral ? 1440 : 1200,
+            mx: 'auto',
+            p: { xs: 2, sm: 3, lg: 4 },
+          }}
+        >
+          {children ?? <Outlet />}
         </Box>
       </Box>
     </Box>

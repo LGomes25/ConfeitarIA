@@ -21,8 +21,9 @@ export function Login() {
     setEnviando(true);
     try {
       await entrar(tipo, identificador, senha);
-      const state = location.state as { from?: { pathname?: string } } | null;
-      navigate(state?.from?.pathname ?? '/perfil', { replace: true });
+      const state = location.state as { from?: { pathname?: string; search?: string } } | null;
+      const destino = state?.from?.pathname ? `${state.from.pathname}${state.from.search ?? ''}` : '/perfil';
+      navigate(destino, { replace: true });
     } catch (error) {
       setErro(getApiErrorMessage(error));
     } finally {
