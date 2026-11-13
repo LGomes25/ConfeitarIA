@@ -15,6 +15,13 @@ public class ConfeitarIADbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RegistroCompra> RegistrosCompra => Set<RegistroCompra>();
     public DbSet<Endereco> Enderecos => Set<Endereco>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Componente> Componentes => Set<Componente>();
+    public DbSet<ReceitaCompleta> ReceitasCompletas => Set<ReceitaCompleta>();
+    public DbSet<ItemReceita> ItensReceita => Set<ItemReceita>();
+    public DbSet<Produto> Produtos => Set<Produto>();
+    public DbSet<ProdutoComponente> ProdutoComponentes => Set<ProdutoComponente>();
+    public DbSet<ItemExtraProduto> ItensExtrasProduto => Set<ItemExtraProduto>();
+    public DbSet<Precificacao> Precificacoes => Set<Precificacao>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

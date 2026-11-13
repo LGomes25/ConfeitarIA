@@ -4,6 +4,7 @@ using ConfeitarIA.Infrastructure.Notifications;
 using ConfeitarIA.Infrastructure.Persistence.Entities;
 using ConfeitarIA.Infrastructure.Persistence.Context;
 using ConfeitarIA.Infrastructure.Persistence.Repositories;
+using ConfeitarIA.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -43,6 +44,11 @@ public static class DependencyInjection
         services.AddScoped<IInsumoRepository, InsumoRepository>();
         services.AddScoped<IRegistroCompraRepository, RegistroCompraRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<Fase4Service>();
+        services.AddScoped<IComponentesService>(provider => provider.GetRequiredService<Fase4Service>());
+        services.AddScoped<IReceitasCompletasService>(provider => provider.GetRequiredService<Fase4Service>());
+        services.AddScoped<IProdutosService>(provider => provider.GetRequiredService<Fase4Service>());
+        services.AddScoped<IPrecificacaoService>(provider => provider.GetRequiredService<Fase4Service>());
 
         return services;
     }

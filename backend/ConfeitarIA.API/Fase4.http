@@ -1,0 +1,209 @@
+@baseUrl = http://localhost:5000
+@token = replace-with-admin-or-team-jwt
+@id = 1
+@itemId = 1
+@produtoId = 1
+
+### Componentes
+GET {{baseUrl}}/api/componentes
+Authorization: Bearer {{token}}
+
+### Componentes inativos
+GET {{baseUrl}}/api/componentes/inativos
+Authorization: Bearer {{token}}
+
+### Detalhe do componente
+GET {{baseUrl}}/api/componentes/{{id}}
+Authorization: Bearer {{token}}
+
+### Criar componente
+POST {{baseUrl}}/api/componentes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Massa de chocolate", "descricao": "Massa base", "tempoPreparoMinutos": 45, "ativo": true }
+
+### Atualizar componente
+PUT {{baseUrl}}/api/componentes/{{id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Massa de chocolate", "descricao": "Massa base atualizada", "tempoPreparoMinutos": 50, "ativo": true }
+
+### Inativar componente
+PATCH {{baseUrl}}/api/componentes/{{id}}/inativar
+Authorization: Bearer {{token}}
+
+### Adicionar insumo ao componente
+POST {{baseUrl}}/api/componentes/{{id}}/itens
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "insumoId": 1, "quantidade": 0.5000 }
+
+### Atualizar quantidade do insumo do componente
+PUT {{baseUrl}}/api/componentes/itens/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "quantidade": 0.7500 }
+
+### Remover insumo do componente
+DELETE {{baseUrl}}/api/componentes/itens/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Receitas completas
+GET {{baseUrl}}/api/receitas-completas
+Authorization: Bearer {{token}}
+
+### Receitas completas inativas
+GET {{baseUrl}}/api/receitas-completas/inativos
+Authorization: Bearer {{token}}
+
+### Detalhe de receita
+GET {{baseUrl}}/api/receitas-completas/{{id}}
+Authorization: Bearer {{token}}
+
+### Criar receita completa
+POST {{baseUrl}}/api/receitas-completas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Bolo de cenoura", "descricao": "Receita completa", "tempoPreparoMinutos": 60, "rendimento": "1 forma", "ativo": true }
+
+### Atualizar receita completa
+PUT {{baseUrl}}/api/receitas-completas/{{id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Bolo de cenoura", "descricao": "Atualizada", "tempoPreparoMinutos": 60, "rendimento": "1 forma", "ativo": true }
+
+### Inativar receita completa
+PATCH {{baseUrl}}/api/receitas-completas/{{id}}/inativar
+Authorization: Bearer {{token}}
+
+### Adicionar insumo à receita completa
+POST {{baseUrl}}/api/receitas-completas/{{id}}/itens
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "insumoId": 1, "quantidade": 0.2500 }
+
+### Atualizar quantidade do insumo da receita
+PUT {{baseUrl}}/api/receitas-completas/itens/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "quantidade": 0.3000 }
+
+### Remover insumo da receita
+DELETE {{baseUrl}}/api/receitas-completas/itens/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Administração: listar produtos (Admin/Manager)
+GET {{baseUrl}}/api/produtos
+Authorization: Bearer {{token}}
+
+### Vitrine pública: produtos ativos
+GET {{baseUrl}}/api/produtos/ativos
+
+### Detalhe interno do produto (Admin/Manager)
+GET {{baseUrl}}/api/produtos/{{produtoId}}
+Authorization: Bearer {{token}}
+
+### Exemplo de produto inexistente (404)
+GET {{baseUrl}}/api/produtos/999999
+Authorization: Bearer {{token}}
+
+### Detalhe público (somente campos públicos)
+GET {{baseUrl}}/api/produtos/{{produtoId}}/publico
+
+### Criar produto e composição inicial
+POST {{baseUrl}}/api/produtos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "nomePublico": "Bolo de chocolate",
+  "descricaoPublica": "Bolo artesanal",
+  "ingredientesPrincipais": "Chocolate e cacau",
+  "ativo": true,
+  "componentes": [{ "componenteId": 1, "ordem": 1 }]
+}
+
+### Atualizar produto
+PUT {{baseUrl}}/api/produtos/{{produtoId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nomePublico": "Bolo de chocolate", "descricaoPublica": "Bolo artesanal", "ingredientesPrincipais": "Chocolate", "ativo": true }
+
+### Inativar produto
+PATCH {{baseUrl}}/api/produtos/{{produtoId}}/inativar
+Authorization: Bearer {{token}}
+
+### Adicionar componente ou receita
+POST {{baseUrl}}/api/produtos/{{produtoId}}/componentes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "receitaCompletaId": 1, "ordem": 2 }
+
+### Atualizar componente da composição
+PUT {{baseUrl}}/api/produtos/componentes/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "componenteId": 1, "ordem": 1 }
+
+### Remover componente da composição
+DELETE {{baseUrl}}/api/produtos/componentes/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Adicionar extra cadastrado
+POST {{baseUrl}}/api/produtos/{{produtoId}}/itens-extras
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "insumoId": 1, "quantidade": 0.0500 }
+
+### Adicionar extra livre
+POST {{baseUrl}}/api/produtos/{{produtoId}}/itens-extras
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "descricaoItem": "Embalagem especial", "valorUnitario": 3.50 }
+
+### Atualizar extra
+PUT {{baseUrl}}/api/produtos/itens-extras/{{itemId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "descricaoItem": "Embalagem reforçada", "valorUnitario": 4.00 }
+
+### Remover extra
+DELETE {{baseUrl}}/api/produtos/itens-extras/{{itemId}}
+Authorization: Bearer {{token}}
+
+### Obter precificação
+GET {{baseUrl}}/api/produtos/{{produtoId}}/precificacao
+Authorization: Bearer {{token}}
+
+### Atualizar precificação e zerar alerta ao revisar preço
+PUT {{baseUrl}}/api/produtos/{{produtoId}}/precificacao
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "precoVendaFinal": 80.00, "tempoMaoObraMinutos": 60, "valorHoraMaoObra": 20.00 }
+
+### Composição detalhada e Pareto 80/20
+GET {{baseUrl}}/api/produtos/{{produtoId}}/composicao-custo
+Authorization: Bearer {{token}}
+
+### Relatório com alerta e margem abaixo da sugerida
+GET {{baseUrl}}/api/relatorios/custos-e-precos?alerta=true&margemAbaixoSugerida=true
+Authorization: Bearer {{token}}
+
+### Exportar relatório CSV
+GET {{baseUrl}}/api/relatorios/custos-e-precos/exportar?alerta=true
+Authorization: Bearer {{token}}

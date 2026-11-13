@@ -22,6 +22,52 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Componente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativo");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nome");
+
+                    b.Property<int?>("TempoPreparoMinutos")
+                        .HasColumnType("integer")
+                        .HasColumnName("tempo_preparo_minutos");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("componentes", (string)null);
+                });
+
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.Insumo", b =>
                 {
                     b.Property<int>("Id")
@@ -61,6 +107,402 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("insumos", (string)null);
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ItemExtraProduto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CustoItem")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("decimal(12,6)")
+                        .HasColumnName("custo_item")
+                        .HasComputedColumnSql("CASE WHEN quantidade IS NULL THEN valor_unitario ELSE quantidade * valor_unitario END", true);
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("DescricaoItem")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("descricao_item");
+
+                    b.Property<int?>("InsumoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("insumo_id");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("produto_id");
+
+                    b.Property<decimal?>("Quantidade")
+                        .HasColumnType("decimal(12,4)")
+                        .HasColumnName("quantidade");
+
+                    b.Property<decimal>("ValorUnitario")
+                        .HasColumnType("decimal(12,6)")
+                        .HasColumnName("valor_unitario");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InsumoId");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("itens_extras_produto", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_itens_extras_tipo", "(insumo_id IS NOT NULL AND descricao_item IS NULL AND quantidade IS NOT NULL) OR (insumo_id IS NULL AND descricao_item IS NOT NULL AND quantidade IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ItemReceita", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ComponenteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("componente_id");
+
+                    b.Property<decimal>("CustoItem")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("decimal(12,6)")
+                        .HasColumnName("custo_item")
+                        .HasComputedColumnSql("quantidade * valor_unitario_no_custo", true);
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int?>("InsumoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("insumo_id");
+
+                    b.Property<decimal>("Quantidade")
+                        .HasColumnType("decimal(12,4)")
+                        .HasColumnName("quantidade");
+
+                    b.Property<int?>("ReceitaCompletaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("receita_completa_id");
+
+                    b.Property<decimal>("ValorUnitarioNoCusto")
+                        .HasColumnType("decimal(12,6)")
+                        .HasColumnName("valor_unitario_no_custo");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComponenteId");
+
+                    b.HasIndex("InsumoId");
+
+                    b.HasIndex("ReceitaCompletaId");
+
+                    b.ToTable("itens_receita", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_itens_receita_destino", "((insumo_id IS NOT NULL AND ((receita_completa_id IS NULL) <> (componente_id IS NULL))) OR (insumo_id IS NULL AND receita_completa_id IS NOT NULL AND componente_id IS NOT NULL))");
+                        });
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Precificacao", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AlertaVariacaoPreco")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("alerta_variacao_preco");
+
+                    b.Property<decimal?>("CustoMaoDeObra")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("custo_mao_de_obra");
+
+                    b.Property<decimal>("CustoTotal")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("custo_total");
+
+                    b.Property<decimal?>("CustoTotalAnterior")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("custo_total_anterior");
+
+                    b.Property<decimal>("CustoTotalInsumos")
+                        .HasColumnType("decimal(12,2)")
+                        .HasColumnName("custo_total_insumos");
+
+                    b.Property<DateTime>("DataUltimaAtualizacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_atualizacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("LucroBruto")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("lucro_bruto");
+
+                    b.Property<decimal>("MargemRealSobreCusto")
+                        .HasColumnType("decimal(8,2)")
+                        .HasColumnName("margem_real_sobre_custo");
+
+                    b.Property<decimal>("MargemRealSobreVenda")
+                        .HasColumnType("decimal(8,2)")
+                        .HasColumnName("margem_real_sobre_venda");
+
+                    b.Property<decimal>("MargemSugeridaPercentual")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(8,2)")
+                        .HasDefaultValue(100m)
+                        .HasColumnName("margem_sugerida_percentual");
+
+                    b.Property<decimal>("PrecoSugerido")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("preco_sugerido");
+
+                    b.Property<decimal>("PrecoVendaFinal")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("preco_venda_final");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("produto_id");
+
+                    b.Property<int?>("TempoMaoObraMinutos")
+                        .HasColumnType("integer")
+                        .HasColumnName("tempo_mao_obra_minutos");
+
+                    b.Property<decimal?>("ValorHoraMaoObra")
+                        .HasColumnType("decimal(10,2)")
+                        .HasColumnName("valor_hora_mao_obra");
+
+                    b.Property<decimal?>("VariacaoCustoPercentual")
+                        .HasColumnType("decimal(8,2)")
+                        .HasColumnName("variacao_custo_percentual");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProdutoId")
+                        .IsUnique();
+
+                    b.ToTable("precificacoes", (string)null);
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Produto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("ApresentarAoPublico")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("apresentar_ao_publico");
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativo");
+
+                    b.Property<int?>("CategoriaProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("categoria_produto_id");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("DescricaoPublica")
+                        .HasColumnType("text")
+                        .HasColumnName("descricao_publica");
+
+                    b.Property<string>("EspecificacaoExtra")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("especificacao_extra");
+
+                    b.Property<string>("IngredientesPrincipais")
+                        .HasColumnType("text")
+                        .HasColumnName("ingredientes_principais");
+
+                    b.Property<string>("NomePublico")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("nome_publico");
+
+                    b.Property<int?>("ReceitaCompletaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("receita_completa_id");
+
+                    b.Property<bool>("SemGluten")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("sem_gluten");
+
+                    b.Property<bool>("SemLactose")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("sem_lactose");
+
+                    b.Property<bool>("Vegano")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("vegano");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceitaCompletaId")
+                        .IsUnique();
+
+                    b.ToTable("produtos", (string)null);
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ProdutoComponente", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ComponenteId")
+                        .HasColumnType("integer")
+                        .HasColumnName("componente_id");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("Ordem")
+                        .HasColumnType("integer")
+                        .HasColumnName("ordem");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("produto_id");
+
+                    b.Property<int?>("ReceitaCompletaId")
+                        .HasColumnType("integer")
+                        .HasColumnName("receita_completa_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ComponenteId");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.HasIndex("ReceitaCompletaId");
+
+                    b.ToTable("produto_componentes", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_produto_componentes_destino", "(componente_id IS NULL) <> (receita_completa_id IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ReceitaCompleta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("ativo");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_criacao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<DateTime>("DataUltimaAlteracao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_ultima_alteracao")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text")
+                        .HasColumnName("descricao");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("nome");
+
+                    b.Property<string>("Rendimento")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("rendimento");
+
+                    b.Property<int?>("TempoPreparoMinutos")
+                        .HasColumnType("integer")
+                        .HasColumnName("tempo_preparo_minutos");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("receitas_completas", (string)null);
                 });
 
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.RegistroCompra", b =>
@@ -422,6 +864,94 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ItemExtraProduto", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("InsumoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ConfeitarIA.Domain.Entities.Produto", "Produto")
+                        .WithMany("ItensExtras")
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("Produto");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ItemReceita", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.Componente", "Componente")
+                        .WithMany("Itens")
+                        .HasForeignKey("ComponenteId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("ConfeitarIA.Domain.Entities.Insumo", "Insumo")
+                        .WithMany()
+                        .HasForeignKey("InsumoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ConfeitarIA.Domain.Entities.ReceitaCompleta", "ReceitaCompleta")
+                        .WithMany("Itens")
+                        .HasForeignKey("ReceitaCompletaId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Componente");
+
+                    b.Navigation("Insumo");
+
+                    b.Navigation("ReceitaCompleta");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Precificacao", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.Produto", "Produto")
+                        .WithOne("Precificacao")
+                        .HasForeignKey("ConfeitarIA.Domain.Entities.Precificacao", "ProdutoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Produto");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Produto", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.ReceitaCompleta", "ReceitaCompleta")
+                        .WithOne()
+                        .HasForeignKey("ConfeitarIA.Domain.Entities.Produto", "ReceitaCompletaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ReceitaCompleta");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ProdutoComponente", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.Componente", "Componente")
+                        .WithMany("Produtos")
+                        .HasForeignKey("ComponenteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ConfeitarIA.Domain.Entities.Produto", "Produto")
+                        .WithMany("Componentes")
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ConfeitarIA.Domain.Entities.ReceitaCompleta", "ReceitaCompleta")
+                        .WithMany("Produtos")
+                        .HasForeignKey("ReceitaCompletaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Componente");
+
+                    b.Navigation("Produto");
+
+                    b.Navigation("ReceitaCompleta");
+                });
+
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.RegistroCompra", b =>
                 {
                     b.HasOne("ConfeitarIA.Domain.Entities.Insumo", "Insumo")
@@ -506,9 +1036,32 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Componente", b =>
+                {
+                    b.Navigation("Itens");
+
+                    b.Navigation("Produtos");
+                });
+
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.Insumo", b =>
                 {
                     b.Navigation("RegistrosCompra");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.Produto", b =>
+                {
+                    b.Navigation("Componentes");
+
+                    b.Navigation("ItensExtras");
+
+                    b.Navigation("Precificacao");
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.ReceitaCompleta", b =>
+                {
+                    b.Navigation("Itens");
+
+                    b.Navigation("Produtos");
                 });
 
             modelBuilder.Entity("ConfeitarIA.Infrastructure.Persistence.Entities.ApplicationUser", b =>

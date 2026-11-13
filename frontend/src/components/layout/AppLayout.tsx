@@ -15,6 +15,10 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
+import SellOutlinedIcon from '@mui/icons-material/SellOutlined';
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 import { useAuth } from '../../context/AuthContext';
 import { Header } from './Header';
 
@@ -125,9 +129,25 @@ export function AppLayout({ children, mostrarBarraLateral }: AppLayoutProps) {
     return r === 'admin' || r === 'manager';
   }) ?? false;
   const isAdmin = sessao?.usuario.perfis.some((role) => role.toLowerCase() === 'admin') ?? false;
+  const canAccessRecipes = sessao?.usuario.perfis.some((role) => {
+    const r = role.toLowerCase();
+    return r === 'admin' || r === 'manager' || r === 'team';
+  }) ?? false;
+  const canAccessProductAdmin = sessao?.usuario.perfis.some((role) => {
+    const r = role.toLowerCase();
+    return r === 'admin' || r === 'manager';
+  }) ?? false;
 
   const items = [
     ...(canAccessInsumosCompras ? navigationItems : []),
+    ...(canAccessRecipes ? [
+      { label: 'Componentes', path: '/receitas/componentes', icon: <LayersOutlinedIcon /> },
+      { label: 'Receitas', path: '/receitas/completas', icon: <MenuBookOutlinedIcon /> },
+    ] : []),
+    ...(canAccessProductAdmin ? [
+      { label: 'Produtos', path: '/admin/produtos', icon: <SellOutlinedIcon /> },
+      { label: 'Custos e preços', path: '/relatorios/custos-e-precos', icon: <AssessmentOutlinedIcon /> },
+    ] : []),
     { label: 'Meu perfil', path: '/perfil', icon: <AccountCircleOutlinedIcon /> },
     ...(isAdmin
       ? [{ label: 'Usuários', path: '/admin/usuarios', icon: <AdminPanelSettingsOutlinedIcon /> }]

@@ -32,6 +32,42 @@ const UsuariosPage = lazy(async () => {
   const module = await import('./pages/admin/Usuarios');
   return { default: module.UsuariosPage };
 });
+const ComponentesListaPage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ComponentesListaPage };
+});
+const ComponentesFormPage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ComponentesFormPage };
+});
+const ReceitasCompletasListaPage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ReceitasCompletasListaPage };
+});
+const ReceitasCompletasFormPage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ReceitasCompletasFormPage };
+});
+const ProdutosListaPage = lazy(async () => {
+  const module = await import('./pages/admin/Produtos');
+  return { default: module.ProdutosListaPage };
+});
+const ProdutoFormPage = lazy(async () => {
+  const module = await import('./pages/admin/Produtos');
+  return { default: module.ProdutoFormPage };
+});
+const ProdutoDetalhePage = lazy(async () => {
+  const module = await import('./pages/admin/Produtos');
+  return { default: module.ProdutoDetalhePage };
+});
+const PrecificacaoPage = lazy(async () => {
+  const module = await import('./pages/admin/PrecificacaoPage');
+  return { default: module.PrecificacaoPage };
+});
+const RelatorioCustosEPrecos = lazy(async () => {
+  const module = await import('./components/relatorios/RelatorioCustosEPrecos');
+  return { default: module.RelatorioCustosEPrecos };
+});
 
 function SemPermissao() {
   return (
@@ -72,6 +108,17 @@ function App() {
         <Route path="/insumos" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><InsumosPage /></Suspense></ProtectedRoute>} />
         <Route path="/insumos/:id" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><InsumoDetalhePage /></Suspense></ProtectedRoute>} />
         <Route path="/compras" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ComprasPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/componentes" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesListaPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/componentes/novo" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/componentes/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/completas" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasListaPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/completas/novo" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/completas/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutosListaPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos/:id/precificacao" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><PrecificacaoPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos/:id" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoDetalhePage /></Suspense></ProtectedRoute>} />
+        <Route path="/relatorios/custos-e-precos" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><RelatorioCustosEPrecos /></Suspense></ProtectedRoute>} />
       </Route>
 
       {/* Rota padrão para rotas não mapeadas */}

@@ -23,3 +23,7 @@ Thumbs.db
 *.log
 dist/
 build/
+
+# Arquivos de Notas
+zumbido/
+ajustes.md
