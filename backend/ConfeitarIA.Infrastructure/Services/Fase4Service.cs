@@ -46,6 +46,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
 
     Task<ProdutoDto?> IProdutosService.ObterAsync(int id, CancellationToken ct) => ObterProdutoAsync(id, ct);
 
+
     public async Task<IReadOnlyList<ComponenteDto>> ListarComponentesAsync(bool ativos, CancellationToken ct)
     {
         var componentes = await _db.Componentes.AsNoTracking().Include(x => x.Itens).ThenInclude(x => x.Insumo)
@@ -206,7 +207,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
                 : produto.NomePublico;
             produto.Atualizar(nomePublico, produto.DescricaoPublica, produto.IngredientesPrincipais,
                 produto.CategoriaProdutoId, produto.Ativo, receita.Id, produto.SemLactose, produto.SemGluten,
-                produto.Vegano, produto.EspecificacaoExtra, produto.ApresentarAoPublico);
+                produto.Vegano, produto.EspecificacoesAdicionais, produto.ApresentarAoPublico, produto.TipoProduto);
             await _db.SaveChangesAsync(ct);
         }
         await CriarOuRecalcularPrecificacaoAsync(produto.Id, ct);
@@ -273,17 +274,50 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
         await tx.CommitAsync(ct);
     }
 
-    public async Task<IReadOnlyList<ProdutoDto>> ListarAsync(CancellationToken ct)
+    public async Task<IReadOnlyList<ProdutoDto>> ListarAsync(string? status = null, string? origem = null, string? tipo = null, string? alerta = null, CancellationToken ct = default)
     {
-        var products = await ProdutoComListaDetalhes().AsNoTracking()
-            .OrderBy(x => x.NomePublico).ToListAsync(ct);
+        var query = ProdutoComListaDetalhes().AsNoTracking();
+
+        if (string.Equals(status, "inativos", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => !x.Ativo);
+        else if (!string.Equals(status, "todos", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.Ativo);
+
+        if (string.Equals(origem, "receita", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(origem, "da-receita", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(origem, "da_receita", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.ReceitaCompletaId != null);
+        else if (string.Equals(origem, "personalizado", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.ReceitaCompletaId == null);
+
+        if (!string.IsNullOrWhiteSpace(tipo) && !string.Equals(tipo, "todos", StringComparison.OrdinalIgnoreCase))
+        {
+            var tipoLower = tipo.Trim().ToLowerInvariant();
+            query = query.Where(x => x.TipoProduto == tipoLower);
+        }
+
+        if (string.Equals(alerta, "com-alerta", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(alerta, "com_alerta", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(alerta, "alerta", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(alerta, "true", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(alerta, "sim", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.Precificacao != null && x.Precificacao.AlertaVariacaoPreco);
+        else if (string.Equals(alerta, "sem-alerta", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(alerta, "sem_alerta", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(alerta, "false", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(alerta, "nao", StringComparison.OrdinalIgnoreCase))
+            query = query.Where(x => x.Precificacao == null || !x.Precificacao.AlertaVariacaoPreco);
+
+        var products = await query.OrderBy(x => x.NomePublico).ToListAsync(ct);
         return products.Select(ToProductDto).ToList();
     }
 
     public async Task<IReadOnlyList<ProdutoPublicoDto>> ListarPublicosAsync(CancellationToken ct) =>
         await _db.Produtos.AsNoTracking().Where(x => x.Ativo && x.ApresentarAoPublico).OrderBy(x => x.NomePublico)
-            .Select(x => new ProdutoPublicoDto(x.NomePublico, x.DescricaoPublica, x.IngredientesPrincipais))
+            .Select(x => new ProdutoPublicoDto(x.NomePublico, x.DescricaoPublica, x.IngredientesPrincipais,
+                x.SemLactose, x.SemGluten, x.Vegano, x.EspecificacoesAdicionais, x.TipoProduto))
             .ToListAsync(ct);
+
 
     public async Task<ProdutoDto?> ObterProdutoAsync(int id, CancellationToken ct)
     {
@@ -293,20 +327,93 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
 
     public async Task<ProdutoPublicoDto?> ObterPublicoAsync(int id, CancellationToken ct) =>
         await _db.Produtos.AsNoTracking().Where(x => x.Id == id && x.Ativo && x.ApresentarAoPublico)
-            .Select(x => new ProdutoPublicoDto(x.NomePublico, x.DescricaoPublica, x.IngredientesPrincipais))
+            .Select(x => new ProdutoPublicoDto(x.NomePublico, x.DescricaoPublica, x.IngredientesPrincipais,
+                x.SemLactose, x.SemGluten, x.Vegano, x.EspecificacoesAdicionais, x.TipoProduto))
             .SingleOrDefaultAsync(ct);
 
-    public Task<ProdutoDto> CriarAsync(CriarProdutoRequest request, CancellationToken ct) =>
-        throw new BusinessRuleException("Produtos são criados automaticamente ao salvar uma receita completa.");
+    public async Task<ProdutoDto> CriarAsync(CriarProdutoRequest request, CancellationToken ct)
+    {
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var produto = new Produto(
+            request.NomePublico,
+            request.DescricaoPublica,
+            request.IngredientesPrincipais,
+            request.CategoriaProdutoId,
+            request.Ativo,
+            request.ReceitaCompletaId,
+            request.SemLactose,
+            request.SemGluten,
+            request.Vegano,
+            request.EspecificacoesAdicionais ?? request.EspecificacaoExtra,
+            request.ApresentarAoPublico,
+            request.TipoProduto);
+
+        _db.Produtos.Add(produto);
+        await _db.SaveChangesAsync(ct);
+
+        if (request.Componentes != null)
+        {
+            foreach (var c in request.Componentes)
+            {
+                var comp = new ProdutoComponente(produto.Id, c.ComponenteId, c.ReceitaCompletaId, c.Ordem);
+                _db.ProdutoComponentes.Add(comp);
+            }
+        }
+
+        if (request.ItensExtras != null)
+        {
+            foreach (var item in request.ItensExtras)
+            {
+                var entity = await CriarItemExtraAsync(produto.Id, item, ct);
+                _db.ItensExtrasProduto.Add(entity);
+            }
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await CriarOuRecalcularPrecificacaoAsync(produto.Id, ct);
+        await tx.CommitAsync(ct);
+
+        return (await ObterProdutoAsync(produto.Id, ct))!;
+    }
 
     public async Task<ProdutoDto> AtualizarAsync(int id, AtualizarProdutoRequest request, CancellationToken ct)
     {
-        var product = await _db.Produtos.SingleOrDefaultAsync(x => x.Id == id, ct)
+        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        var product = await _db.Produtos
+            .Include(x => x.Componentes)
+            .Include(x => x.ItensExtras)
+            .SingleOrDefaultAsync(x => x.Id == id, ct)
             ?? throw new EntityNotFoundException(nameof(Produto), id);
+
         product.Atualizar(request.NomePublico, request.DescricaoPublica, request.IngredientesPrincipais,
             request.CategoriaProdutoId, request.Ativo, product.ReceitaCompletaId, request.SemLactose,
-            request.SemGluten, request.Vegano, request.EspecificacaoExtra, request.ApresentarAoPublico);
+            request.SemGluten, request.Vegano, request.EspecificacoesAdicionais ?? request.EspecificacaoExtra,
+            request.ApresentarAoPublico, request.TipoProduto);
+
+        if (request.Componentes != null && product.ReceitaCompletaId == null)
+        {
+            _db.ProdutoComponentes.RemoveRange(product.Componentes);
+            foreach (var c in request.Componentes)
+            {
+                var comp = new ProdutoComponente(product.Id, c.ComponenteId, c.ReceitaCompletaId, c.Ordem);
+                _db.ProdutoComponentes.Add(comp);
+            }
+        }
+
+        if (request.ItensExtras != null)
+        {
+            _db.ItensExtrasProduto.RemoveRange(product.ItensExtras);
+            foreach (var item in request.ItensExtras)
+            {
+                var entity = await CriarItemExtraAsync(product.Id, item, ct);
+                _db.ItensExtrasProduto.Add(entity);
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
+        await CriarOuRecalcularPrecificacaoAsync(id, ct);
+        await tx.CommitAsync(ct);
+
         return (await ObterProdutoAsync(id, ct))!;
     }
 
@@ -678,7 +785,8 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
         _db.Produtos.Include(x => x.ReceitaCompleta)
             .Include(x => x.Componentes).ThenInclude(x => x.Componente)
             .Include(x => x.Componentes).ThenInclude(x => x.ReceitaCompleta)
-            .Include(x => x.ItensExtras).ThenInclude(x => x.Insumo);
+            .Include(x => x.ItensExtras).ThenInclude(x => x.Insumo)
+            .Include(x => x.Precificacao);
 
     private async Task ValidarProdutoAsync(int id, CancellationToken ct)
     {
@@ -736,12 +844,13 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
     private static ProdutoDto ToProductDto(Produto x) =>
         new(x.Id, x.NomePublico, x.DescricaoPublica, x.IngredientesPrincipais, x.CategoriaProdutoId,
             x.ReceitaCompletaId, x.ReceitaCompleta?.Nome, x.SemLactose, x.SemGluten, x.Vegano,
-            x.EspecificacaoExtra, x.ApresentarAoPublico, x.Ativo, ToOffset(x.DataCriacao), ToOffset(x.DataUltimaAlteracao),
+            x.EspecificacoesAdicionais ?? x.EspecificacaoExtra, x.ApresentarAoPublico, x.Ativo, ToOffset(x.DataCriacao), ToOffset(x.DataUltimaAlteracao),
             x.Componentes.OrderBy(c => c.Ordem).ThenBy(c => c.Id)
                 .Select(c => new ProdutoComponenteDto(c.Id, c.ComponenteId, c.Componente?.Nome,
                     c.ReceitaCompletaId, c.ReceitaCompleta?.Nome, c.Ordem)).ToList(),
             x.ItensExtras.OrderBy(e => e.Id).Select(e => new ItemExtraProdutoDto(e.Id, e.InsumoId,
-                e.DescricaoItem, e.Quantidade, e.ValorUnitario, e.CustoItem, e.Insumo?.Nome)).ToList());
+                e.DescricaoItem, e.Quantidade, e.ValorUnitario, e.CustoItem, e.Insumo?.Nome)).ToList(),
+            x.TipoProduto, x.EspecificacoesAdicionais, x.Precificacao?.AlertaVariacaoPreco ?? false);
 
     private static DateTimeOffset ToOffset(DateTime value) =>
         new(DateTime.SpecifyKind(value, DateTimeKind.Utc));

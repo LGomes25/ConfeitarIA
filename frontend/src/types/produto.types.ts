@@ -4,6 +4,11 @@ export interface ProdutoPublico {
   nomePublico: string;
   descricaoPublica: string | null;
   ingredientesPrincipais: string | null;
+  semLactose?: boolean;
+  semGluten?: boolean;
+  vegano?: boolean;
+  especificacoesAdicionais?: string | null;
+  tipoProduto?: string | null;
 }
 
 export interface Produto {
@@ -13,10 +18,12 @@ export interface Produto {
   ingredientesPrincipais: string | null;
   receitaCompletaId: number | null;
   receitaCompletaNome: string | null;
+  tipoProduto?: string | null;
   semLactose: boolean;
   semGluten: boolean;
   vegano: boolean;
-  especificacaoExtra: string | null;
+  especificacoesAdicionais?: string | null;
+  especificacaoExtra?: string | null;
   apresentarAoPublico: boolean;
   ativo: boolean;
   componentes: ProdutoComponente[];
@@ -39,10 +46,23 @@ export interface ProdutoFormData {
   nomePublico: string;
   descricaoPublica: string;
   ingredientesPrincipais: string;
+  tipoProduto: string;
+  especificacoesAdicionais: string;
+  especificacaoExtra?: string;
   semLactose: boolean;
   semGluten: boolean;
   vegano: boolean;
-  especificacaoExtra: string;
   apresentarAoPublico: boolean;
   ativo: boolean;
+  receitaCompletaId?: number | null;
+  componentes?: Array<{ componenteId?: number; receitaCompletaId?: number; ordem: number }>;
+  itensExtras?: Array<{ insumoId?: number; descricaoItem?: string; quantidade?: number; valorUnitario?: number }>;
 }
+
+export const TIPOS_PRODUTO = [
+  { value: 'bolos', label: 'Bolos' },
+  { value: 'sobremesas', label: 'Sobremesas' },
+  { value: 'docinhos-festa', label: 'Docinhos de Festa' },
+  { value: 'bolos-decorados', label: 'Bolos Decorados' },
+  { value: 'massas-salgadas', label: 'Massas Salgadas' },
+] as const;

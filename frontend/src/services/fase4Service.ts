@@ -40,8 +40,8 @@ export const fase4Service = {
     await api.delete(`${rotaReceita(tipo)}/itens/${id}`);
   },
 
-  async listarProdutos(): Promise<Produto[]> {
-    const response = await api.get<Produto[]>('/produtos');
+  async listarProdutos(params?: { status?: string; origem?: string; tipo?: string; alerta?: string }): Promise<Produto[]> {
+    const response = await api.get<Produto[]>('/produtos', { params });
     return response.data;
   },
   async listarProdutosAtivos(): Promise<ProdutoPublico[]> {

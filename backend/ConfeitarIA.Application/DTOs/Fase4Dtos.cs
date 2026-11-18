@@ -83,7 +83,9 @@ public sealed record AtualizarReceitaCompletaRequest
 }
 
 /// <summary>Campos permitidos na vitrine pública.</summary>
-public sealed record ProdutoPublicoDto(string NomePublico, string? DescricaoPublica, string? IngredientesPrincipais);
+public sealed record ProdutoPublicoDto(string NomePublico, string? DescricaoPublica, string? IngredientesPrincipais,
+    bool SemLactose = false, bool SemGluten = false, bool Vegano = false, string? EspecificacoesAdicionais = null,
+    string? TipoProduto = null);
 
 /// <summary>Componente ou receita completa vinculada a um produto.</summary>
 public sealed record ProdutoComponenteDto(int Id, int? ComponenteId, string? ComponenteNome,
@@ -98,7 +100,8 @@ public sealed record ProdutoDto(int Id, string NomePublico, string? DescricaoPub
     int? CategoriaProdutoId, int? ReceitaCompletaId, string? ReceitaCompletaNome, bool SemLactose,
     bool SemGluten, bool Vegano, string? EspecificacaoExtra, bool ApresentarAoPublico, bool Ativo,
     DateTimeOffset DataCriacao, DateTimeOffset DataUltimaAlteracao,
-    IReadOnlyList<ProdutoComponenteDto> Componentes, IReadOnlyList<ItemExtraProdutoDto> ItensExtras);
+    IReadOnlyList<ProdutoComponenteDto> Componentes, IReadOnlyList<ItemExtraProdutoDto> ItensExtras,
+    string? TipoProduto = null, string? EspecificacoesAdicionais = null, bool AlertaVariacaoPreco = false);
 
 /// <summary>Componente ou receita a vincular ao produto.</summary>
 public sealed record ProdutoComponenteRequest
@@ -131,16 +134,16 @@ public sealed record CriarProdutoRequest
     [Range(1, int.MaxValue)]
     public int? CategoriaProdutoId { get; init; }
     public int? ReceitaCompletaId { get; init; }
+    public string? TipoProduto { get; init; }
     public bool SemLactose { get; init; }
     public bool SemGluten { get; init; }
     public bool Vegano { get; init; }
-    [StringLength(100)]
+    [StringLength(150)]
+    public string? EspecificacoesAdicionais { get; init; }
     public string? EspecificacaoExtra { get; init; }
     public bool ApresentarAoPublico { get; init; }
     public bool Ativo { get; init; } = true;
-    [Required]
     public IReadOnlyList<ProdutoComponenteRequest> Componentes { get; init; } = Array.Empty<ProdutoComponenteRequest>();
-    [Required]
     public IReadOnlyList<ItemExtraProdutoRequest> ItensExtras { get; init; } = Array.Empty<ItemExtraProdutoRequest>();
 }
 
@@ -153,13 +156,17 @@ public sealed record AtualizarProdutoRequest
     public string? IngredientesPrincipais { get; init; }
     [Range(1, int.MaxValue)]
     public int? CategoriaProdutoId { get; init; }
+    public string? TipoProduto { get; init; }
     public bool SemLactose { get; init; }
     public bool SemGluten { get; init; }
     public bool Vegano { get; init; }
-    [StringLength(100)]
+    [StringLength(150)]
+    public string? EspecificacoesAdicionais { get; init; }
     public string? EspecificacaoExtra { get; init; }
     public bool ApresentarAoPublico { get; init; }
     public bool Ativo { get; init; } = true;
+    public IReadOnlyList<ProdutoComponenteRequest>? Componentes { get; init; }
+    public IReadOnlyList<ItemExtraProdutoRequest>? ItensExtras { get; init; }
 }
 
 /// <summary>Custos, preço sugerido e margens calculadas de um produto.</summary>

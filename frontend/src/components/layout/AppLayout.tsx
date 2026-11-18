@@ -133,7 +133,11 @@ export function AppLayout({ children, mostrarBarraLateral }: AppLayoutProps) {
     const r = role.toLowerCase();
     return r === 'admin' || r === 'manager' || r === 'team';
   }) ?? false;
-  const canAccessProductAdmin = sessao?.usuario.perfis.some((role) => {
+  const canAccessProducts = sessao?.usuario.perfis.some((role) => {
+    const r = role.toLowerCase();
+    return r === 'admin' || r === 'manager' || r === 'team';
+  }) ?? false;
+  const canAccessReports = sessao?.usuario.perfis.some((role) => {
     const r = role.toLowerCase();
     return r === 'admin' || r === 'manager';
   }) ?? false;
@@ -144,8 +148,10 @@ export function AppLayout({ children, mostrarBarraLateral }: AppLayoutProps) {
       { label: 'Componentes', path: '/receitas/componentes', icon: <LayersOutlinedIcon /> },
       { label: 'Receitas', path: '/receitas/completas', icon: <MenuBookOutlinedIcon /> },
     ] : []),
-    ...(canAccessProductAdmin ? [
+    ...(canAccessProducts ? [
       { label: 'Produtos', path: '/admin/produtos', icon: <SellOutlinedIcon /> },
+    ] : []),
+    ...(canAccessReports ? [
       { label: 'Custos e preços', path: '/relatorios/custos-e-precos', icon: <AssessmentOutlinedIcon /> },
     ] : []),
     { label: 'Meu perfil', path: '/perfil', icon: <AccountCircleOutlinedIcon /> },

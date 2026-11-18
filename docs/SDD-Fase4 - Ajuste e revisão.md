@@ -113,3 +113,5 @@ A tabela `itens_receita` já suporta ambos:
 - "Apresentar ao público" vem como Não por padrão — só aparece na vitrine se alterado para Sim
 - Custos e Preços lista apenas produtos com receita vinculada
 - Fases 1, 2 e 3 continuam funcionando sem alterações
+
+⚠️ **Após implementação: teste exaustivamente todos os fluxos antes de considerar concluído. Garanta que nada foi quebrado.**

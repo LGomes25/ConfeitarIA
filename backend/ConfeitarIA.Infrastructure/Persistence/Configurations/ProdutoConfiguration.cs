@@ -19,7 +19,9 @@ public sealed class ProdutoConfiguration : IEntityTypeConfiguration<Produto>
         builder.Property(x => x.SemLactose).HasColumnName("sem_lactose").HasDefaultValue(false).IsRequired();
         builder.Property(x => x.SemGluten).HasColumnName("sem_gluten").HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Vegano).HasColumnName("vegano").HasDefaultValue(false).IsRequired();
-        builder.Property(x => x.EspecificacaoExtra).HasColumnName("especificacao_extra").HasMaxLength(100);
+        builder.Property(x => x.EspecificacoesAdicionais).HasColumnName("especificacoes_adicionais").HasMaxLength(150);
+        builder.Ignore(x => x.EspecificacaoExtra);
+        builder.Property(x => x.TipoProduto).HasColumnName("tipo_produto").HasMaxLength(50);
         builder.Property(x => x.ApresentarAoPublico).HasColumnName("apresentar_ao_publico").HasDefaultValue(false).IsRequired();
         builder.Property(x => x.Ativo).HasColumnName("ativo").HasDefaultValue(true).IsRequired();
         builder.Property(x => x.DataCriacao).HasColumnName("data_criacao").HasDefaultValueSql("CURRENT_TIMESTAMP").IsRequired();

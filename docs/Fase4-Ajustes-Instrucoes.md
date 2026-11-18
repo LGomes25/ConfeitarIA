@@ -1,113 +1,95 @@
-#  Fase4-Instrucoes-Ajuste.md
-
-## Instruções de Implementação — Ajustes de Fluxo Fase 4
+## Instruções de Implementação — Ajustes de UX Fase 4
 
 **Projeto:** ConfeitarIA
-**Versão:** 1.2
-**Data:** 12/11/2026
+**Versão:** 1.0
+**Data:** 16/11/2026
 
 >
-> ⚠️ **Leia primeiro:** Consulte `SDD-Fase4.md` e `Fase4-Instrucoes.md` para o contexto completo. Este documento contém **apenas as alterações e complementos necessários** — não repete o que já está definido nos arquivos originais. Nada das Fases 1, 2 e 3 será alterado.
+> 📚 **Consulte antes de começar:**
+>
+>
+> - `/docs/SDD-Fase4.md` — Especificação original da Fase 4
+> - `/docs/SDD-Fase4 - Ajuste e revisão.md` — Fluxo de negócio revisado
+> - `/docs/SDD-Fase4-Ajustes de UX e Fluxo.md` — Documento de especificação
+> - `README.md` — Visão geral e estrutura do projeto
+>
+>
+> ⚠️ **REGRA DE OURO:** Nenhum arquivo, rota ou funcionalidade das Fases 1, 2 e 3 deve ser modificado. Apenas adicione e altere o que está explicitamente descrito aqui. **Crie migration para qualquer alteração de estrutura de banco de dados. Teste tudo antes de finalizar.**
 
 ---
 
-## 1. 🎯 Escopo destas Instruções
+## 1. Backend — Alterações
 
-Estas instruções complementam e ajustam o que foi definido anteriormente. Aplicar **apenas os pontos abaixo**:
-| # | Área                | Ação                                                |
-| - | ------------------- | --------------------------------------------------- |
-| 1 | 📖 Receita Completa | Adicionar opção de inserir Componentes na receita   |
-| 2 | 🏷️ Produto         | Fluxo automático a partir da Receita + novos campos |
-| 3 | 💰 Custos e Preços  | Filtrar apenas produtos com receita vinculada       |
-| 4 | 🚫 Orçamentos       | Remover do escopo atual — implementação futura      |
+### 1.1 Migração — Novos Campos na Tabela `produtos`
 
-## 2. 📖 Receita Completa — Adicionar Componentes
+```
+dotnet ef migrations add Fase4_Ajustes_Produtos_Caracteristicas
+```
 
-### 2.1 Backend
+Aplicar os campos conforme SDD-Fase4-Ajustes.md, seção 4.4.
 
-- ✅ **NÃO criar novas tabelas ou migrações** — a coluna `componente_id` já existe em `itens_receita`
-- No serviço de Receita Completa: permitir que `componente_id` seja informado ao adicionar um item
-- Ao incluir um componente: seus insumos são carregados e considerados no cálculo de custo da receita
-- Regra de validação: o item deve ter **apenas um** preenchido — `insumo_id` OU `componente_id`
+### 1.2 Serviços e DTOs
 
-### 2.2 Frontend
-
-- Na tela de cadastro/edição de Receita Completa, ao lado de **"+ Adicionar insumo"**, adicionar botão: **"+ Adicionar Componente"**
-- Ao clicar: abre um modal com lista de Componentes ativos → seleciona um → confirma
-- O componente aparece na lista com ícone diferenciado → pode expandir para visualizar seus insumos
-- Itens do componente são **somente leitura** na receita — alteração só no cadastro do componente
+- Atualizar DTO de Produto para incluir os novos campos
+- Atualizar serviço de listagem para aplicar os novos filtros (Origem, Tipo, Alerta)
+- Atualizar lógica de composição: distinguir produto de receita vs personalizado na montagem da tabela de ingredientes
+- Atualizar permissões nos endpoints: Editar e Precificação → `[Authorize(Roles = "Admin,Manager")]`
 
 ---
 
-## 3. 🏷️ Produto — Fluxo Automático e Novos Campos
+## 2. Frontend — Alterações por Tela
 
-### 3.1 Backend — Criação Automática
+### 2.1 🧩 Componentes e 📖 Receitas — Custo em Tempo Real
 
-No método de salvamento de Receita Completa, **após confirmação de sucesso**:
+- Adicionar elemento de exibição do total calculado
+- Criar função de cálculo que executa a cada alteração na lista de itens
+- Aplicar na tela de cadastro **e** de edição
 
-Ao salvar Receita Completa:
-  → Buscar Produto onde receita_completa_id = Id da receita
-  → Se não existir:
-      • Criar produto com:
-        nome_publico = receita.Nome
-        receita_completa_id = receita.Id
-        apresentar_ao_publico = false (padrão)
-        ativo = true
-  → Se existir:
-      • Atualizar apenas nome_publico (se não foi alterado manualmente) e dados de vínculo
+### 2.2 🏷️ Produtos — Listagem
 
-### 3.2 Modelo de Dados — Novos Campos na Tabela `produtos`
+- Adicionar botão **"+ Novo Produto"**
+- Atualizar cabeçalhos da tabela: "Receita" → "Origem"; adicionar coluna "Tipo"; centralizar "Ações"
+- Implementar filtros: Origem, Tipo, Alerta de Custo — aplicar na consulta
+
+### 2.3 🏷️ Criar/Editar Produto
+
+- Reorganizar campos na ordem definida
+- Implementar lógica de Origem (somente leitura)
+- Implementar dropdown Tipo de Produto com valores definidos
+- Agrupar características especiais em bloco visual organizado
+- Tabela de ingredientes: colunas corretas; campos travados quando origem ≠ Personalizado
+- Botões "+ Adicionar Receita Completa" e "+ Adicionar Componente" — visíveis apenas na criação
+- Bloco Itens Extras — tipo de item, seleção, quantidade, adicionar, remover
+
+### 2.4 👁️ Detalhes do Produto
+
+- Remover bloco Itens Extras
+- Atualizar título e texto informativo da composição
+- Remover colunas Valor Unitário e Custo da tabela
+- Ocultar botões Editar e Precificação para perfil Team
+- Exibir características especiais de forma organizada abaixo da descrição
+
+### 2.5 🍰 Vitrine Pública
+
+- Incluir exibição das características especiais (Sem Lactose, Sem Glúten, Vegano, Especificações) abaixo da descrição do produto
+
+---
+
+## 3. ✅ Verificação Antes de Concluir
+
+- Migration criada, aplicada e sem perda de dados
+- Fases 1, 2 e 3 funcionam inalteradas
+- Custo em tempo real funciona em cadastro e edição
+- Filtros novos funcionam corretamente
+- Mesma tela cria e edita produtos
+- Origem exibida corretamente
+- Ingredientes travados para produtos de receita
+- Botões de adicionar aparecem apenas quando devem
+- Itens Extras disponíveis em criar e editar
+- Detalhes não mostra valores de custo nem Itens Extras
+- Botões corretos visíveis por perfil
+- Características aparecem em detalhes e vitrine pública
+- `README.md` está atualizado
 
 >
-> ⚠️ Criar migração **apenas com estes novos campos**:
-| Campo                   | Tipo           | Padrão  | Descrição                    |
-| ----------------------- | -------------- | ------- | ---------------------------- |
-| `sem_lactose`           | `BOOLEAN`      | `false` | Marcação especial            |
-| `sem_gluten`            | `BOOLEAN`      | `false` | Marcação especial            |
-| `vegano`                | `BOOLEAN`      | `false` | Marcação especial            |
-| `especificacao_extra`   | `VARCHAR(100)` | `NULL`  | Campo de texto livre         |
-| `apresentar_ao_publico` | `BOOLEAN`      | `false` | Controla exibição na vitrine |
-
-### 3.3 Frontend — Tela de Produto
-
-- Remover botão de "Novo Produto" — criação é automática
-- A tela passa a ser de **visualização e edição de dados complementares**:
-  - ✅ Exibe nome da receita vinculada (somente leitura)
-  - ✅ Nome público — editável
-  - ✅ Descrição pública — editável
-  - ✅ Lista de insumos da receita → cada um com checkbox **"Ingrediente principal"**
-  - ✅ Campo `ingredientes_principais` — preenchimento automático ao salvar, baseado nos checkboxes marcados
-  - ✅ Checkboxes: Sem Lactose / Sem Glúten / Vegano
-  - ✅ Campo de texto: "Especificações adicionais"
-  - ✅ Seleção: "Apresentar ao público" → Sim / Não (padrão = Não)
-
->
-> 💡 **Lógica de geração do texto:** Ao salvar, o sistema percorre os itens com checkbox marcado, concatena os nomes separados por vírgula e salva no campo `ingredientes_principais`.
-
----
-
-## 4. 💰 Custos e Preços — Filtro de Exibição
-
-- No serviço de relatório: alterar consulta para retornar **apenas produtos onde `receita_completa_id IS NOT NULL`**
-- Manter todos os demais campos, cálculos e filtros existentes inalterados
-
----
-
-## 5. 🚫 O QUE NÃO FAZER — Importante
-
-- ❌ **Não criar** área de orçamentos / bolos decorados — implementação futura
-- ❌ **Não permitir** vincular múltiplos componentes diretamente no produto — o fluxo é: Componentes → Receita Completa → Produto
-- ❌ **Não modificar** telas, regras ou fluxos das Fases 1, 2 e 3
-- ❌ **Não remover** nenhum campo ou funcionalidade existente na Fase 4
-
----
-
-## 6. ✅ Verificação Final
-
-- Receita Completa aceita insumos avulsos E componentes
-- Componentes na receita têm seus insumos visíveis e custo calculado corretamente
-- Salvar receita → produto é criado/atualizado automaticamente
-- Novos campos de especificação e controle de vitrine funcionam
-- Ingredientes principais são gerados corretamente a partir dos checkboxes
-- Custos e Preços exibe apenas produtos com receita vinculada
-- Nenhuma funcionalidade anterior foi quebrada
+> ⚠️ **FINAL:** Após tudo implementado e testado, confirme que o sistema está estável e funcionando corretamente em todas as telas. Então atualize o `README.md` se necessário e considere esta fase concluída.

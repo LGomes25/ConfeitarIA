@@ -29,10 +29,10 @@ public interface IReceitasCompletasService
 
 public interface IProdutosService
 {
-    Task<IReadOnlyList<ProdutoDto>> ListarAsync(CancellationToken ct);
-    Task<IReadOnlyList<ProdutoPublicoDto>> ListarPublicosAsync(CancellationToken ct);
-    Task<ProdutoDto?> ObterAsync(int id, CancellationToken ct);
-    Task<ProdutoPublicoDto?> ObterPublicoAsync(int id, CancellationToken ct);
+    Task<IReadOnlyList<ProdutoDto>> ListarAsync(string? status = null, string? origem = null, string? tipo = null, string? alerta = null, CancellationToken ct = default);
+    Task<IReadOnlyList<ProdutoPublicoDto>> ListarPublicosAsync(CancellationToken ct = default);
+    Task<ProdutoDto?> ObterAsync(int id, CancellationToken ct = default);
+    Task<ProdutoPublicoDto?> ObterPublicoAsync(int id, CancellationToken ct = default);
     Task<ProdutoDto> CriarAsync(CriarProdutoRequest request, CancellationToken ct);
     Task<ProdutoDto> AtualizarAsync(int id, AtualizarProdutoRequest request, CancellationToken ct);
     Task InativarAsync(int id, CancellationToken ct);

@@ -358,10 +358,10 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("descricao_publica");
 
-                    b.Property<string>("EspecificacaoExtra")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("especificacao_extra");
+                    b.Property<string>("EspecificacoesAdicionais")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("especificacoes_adicionais");
 
                     b.Property<string>("IngredientesPrincipais")
                         .HasColumnType("text")
@@ -388,6 +388,11 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("sem_lactose");
+
+                    b.Property<string>("TipoProduto")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("tipo_produto");
 
                     b.Property<bool>("Vegano")
                         .ValueGeneratedOnAdd()

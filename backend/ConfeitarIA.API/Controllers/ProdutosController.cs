@@ -9,13 +9,18 @@ namespace ConfeitarIA.API.Controllers;
 [Route("api/produtos")]
 public sealed class ProdutosController(IProdutosService service) : ControllerBase
 {
-    /// <summary>Lista produtos internos com composição.</summary>
+    /// <summary>Lista produtos internos com composição e filtros opcionais.</summary>
     [HttpGet]
     [Authorize(Roles = "Admin,Manager,Team")]
     [ProducesResponseType(typeof(IReadOnlyList<ProdutoDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<ProdutoDto>>> Listar(CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<ProdutoDto>>> Listar(
+        [FromQuery] string? status,
+        [FromQuery] string? origem,
+        [FromQuery] string? tipo,
+        [FromQuery] string? alerta,
+        CancellationToken ct)
     {
-        var produtos = await service.ListarAsync(ct);
+        var produtos = await service.ListarAsync(status, origem, tipo, alerta, ct);
         return Ok(PodeVerItensExtras() ? produtos : produtos.Select(OcultarItensExtras));
     }
 

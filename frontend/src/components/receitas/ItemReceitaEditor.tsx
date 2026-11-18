@@ -1,10 +1,11 @@
-import { Accordion, AccordionDetails, AccordionSummary, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { ItemInsumoForm } from './ItemInsumoForm';
+import { ItemComponenteForm } from './ItemComponenteForm';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Insumo } from '../../types/insumo';
 import type { Componente, ItemReceita, ItemReceitaFormData } from '../../types/componente.types';
+import { formatCurrency } from '../../utils/format';
 
 export interface ItemReceitaDraft extends ItemReceitaFormData, Partial<Pick<ItemReceita, 'componenteNome' | 'itensComponente'>> {
   id?: number;
@@ -25,6 +26,25 @@ export function ItemReceitaEditor({
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [componenteSelecionado, setComponenteSelecionado] = useState('');
+
+  // Cálculo de Custo Total em tempo real
+  const custoTotalCalculado = useMemo(() => {
+    return itens.reduce((sum, item) => {
+      const qtd = Number(item.quantidade) || 0;
+      if (item.componenteId) {
+        const comp = componentes.find((c) => c.id === item.componenteId);
+        const compCost = comp?.custoTotal ?? (comp?.itens ?? []).reduce((acc, sub) => acc + (sub.custoItem || 0), 0);
+        return sum + qtd * compCost;
+      }
+      if (item.insumoId) {
+        const insumo = insumos.find((i) => i.id === item.insumoId);
+        const unitCost = Number(insumo?.custoUnitario ?? insumo?.valorUnitarioAtual ?? 0);
+        return sum + qtd * unitCost;
+      }
+      return sum;
+    }, 0);
+  }, [itens, insumos, componentes]);
+
   const atualizar = (index: number, patch: Partial<ItemReceitaDraft>) => {
     onChange(itens.map((item, current) => current === index ? { ...item, ...patch } : item));
   };
@@ -42,94 +62,51 @@ export function ItemReceitaEditor({
   };
   return (
     <Stack spacing={1.5}>
-      {itens.map((item, index) => (
-        item.componenteId ? (
-          <Accordion key={item.id ?? `novo-${index}`} disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
-            <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, flexWrap: 'wrap' }}>
-                <Typography sx={{ flex: '1 1 180px', fontWeight: 700 }}>🧩 {item.componenteNome}</Typography>
-                <TextField
-                  type="number"
-                  size="small"
-                  label="Quantidade"
-                  value={item.quantidade}
-                  inputProps={{ min: 0.0001, step: 0.0001 }}
-                  onClick={(event) => event.stopPropagation()}
-                  onChange={(event) => atualizar(index, { quantidade: Number(event.target.value) })}
-                  sx={{ width: 140 }}
-                />
-                <IconButton
-                  aria-label={`Remover componente ${item.componenteNome}`}
-                  color="error"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onChange(itens.filter((_, current) => current !== index));
-                  }}
-                >
-                  <DeleteOutlineRoundedIcon />
-                </IconButton>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Stack spacing={0.75}>
-                {(item.itensComponente ?? []).map((ingredient) => (
-                  <Box key={ingredient.id} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                    <Typography>{ingredient.insumoNome}</Typography>
-                    <Typography color="text.secondary">{ingredient.quantidade} {ingredient.unidadeMedida}</Typography>
-                  </Box>
-                ))}
-                {!item.itensComponente?.length && <Typography color="text.secondary">Este componente ainda não possui insumos.</Typography>}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        ) : (
-          <Box key={item.id ?? `novo-${index}`} sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <TextField
-              select
-              required
-              label="Insumo"
-              value={item.insumoId || ''}
-              onChange={(event) => atualizar(index, { insumoId: Number(event.target.value) })}
-              sx={{ flex: '1 1 220px' }}
-            >
-              {insumos.map((insumo) => (
-                <MenuItem key={insumo.id} value={insumo.id}>{insumo.nome} ({insumo.unidadeMedida})</MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              required
-              type="number"
-              label="Quantidade"
-              value={item.quantidade}
-              inputProps={{ min: 0.0001, step: 0.0001 }}
-              onChange={(event) => atualizar(index, { quantidade: Number(event.target.value) })}
-              sx={{ width: { xs: '100%', sm: 160 } }}
+      {itens.map((item, index) => {
+        if (item.componenteId) {
+          const comp = componentes.find((c) => c.id === item.componenteId);
+          return (
+            <ItemComponenteForm
+              key={item.id ?? `novo-${index}`}
+              item={item}
+              componente={comp}
+              onUpdate={(patch) => atualizar(index, patch)}
+              onRemove={() => onChange(itens.filter((_, i) => i !== index))}
             />
-            <IconButton
-              aria-label={`Remover insumo ${index + 1}`}
-              color="error"
-              onClick={() => onChange(itens.filter((_, current) => current !== index))}
-            >
-              <DeleteOutlineRoundedIcon />
-            </IconButton>
-          </Box>
-        )
-      ))}
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
-        <Button
-          type="button"
-          variant="outlined"
-          startIcon={<AddRoundedIcon />}
-          onClick={() => onChange([...itens, { insumoId: 0, quantidade: 1 }])}
-        >
-          Adicionar insumo
-        </Button>
-        {permitirComponentes && (
-          <Button type="button" variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>
-            Adicionar Componente
+          );
+        }
+        // insumo item
+        return (
+          <ItemInsumoForm
+            key={item.id ?? `novo-${index}`}
+            item={item}
+            index={index}
+            insumos={insumos}
+            onUpdate={(patch) => atualizar(index, patch)}
+            onRemove={() => onChange(itens.filter((_, i) => i !== index))}
+          />
+        );
+      })}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, pt: 1 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="flex-start">
+          <Button
+            type="button"
+            variant="outlined"
+            startIcon={<AddRoundedIcon />}
+            onClick={() => onChange([...itens, { insumoId: 0, quantidade: 1 }])}
+          >
+            Adicionar insumo
           </Button>
-        )}
-      </Stack>
+          {permitirComponentes && (
+            <Button type="button" variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setDialogOpen(true)}>
+              Adicionar Componente
+            </Button>
+          )}
+        </Stack>
+        <Typography variant="h6" fontWeight={700} sx={{ color: 'primary.main', fontSize: '1.1rem' }}>
+          Custo Total: {formatCurrency(custoTotalCalculado)}
+        </Typography>
+      </Box>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>Adicionar componente</DialogTitle>
         <DialogContent>

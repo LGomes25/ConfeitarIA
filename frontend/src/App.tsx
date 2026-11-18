@@ -114,10 +114,11 @@ function App() {
         <Route path="/receitas/completas" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasListaPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/completas/novo" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/completas/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/produtos" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutosListaPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ProdutosListaPage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos/novo" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoFormPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/produtos/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoFormPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/produtos/:id/precificacao" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><PrecificacaoPage /></Suspense></ProtectedRoute>} />
-        <Route path="/admin/produtos/:id" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoDetalhePage /></Suspense></ProtectedRoute>} />
+        <Route path="/admin/produtos/:id" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ProdutoDetalhePage /></Suspense></ProtectedRoute>} />
         <Route path="/relatorios/custos-e-precos" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><RelatorioCustosEPrecos /></Suspense></ProtectedRoute>} />
       </Route>
 

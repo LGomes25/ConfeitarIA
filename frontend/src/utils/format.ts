@@ -3,6 +3,11 @@ export function formatCurrency(value: number | null | undefined): string {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 }
 
+export function formatCurrency5(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '—';
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 5, maximumFractionDigits: 5 }).format(value);
+}
+
 export function formatDate(value: string | null | undefined): string {
   if (!value) return '—';
   const [year, month, day] = value.slice(0, 10).split('-');

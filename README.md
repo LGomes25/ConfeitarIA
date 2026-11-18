@@ -57,7 +57,14 @@ O ConfeitarIA é uma aplicação desenvolvida para substituir o controle manual 
 > - **`Customer`:** Acesso ao Meu Perfil e às páginas públicas; vitrine somente leitura e sem barra lateral operacional.
 > - **Visitante (deslogado):** Acesso às páginas institucionais e à vitrine pública.
 >
-> A Fase 4 adiciona cadastro e gestão de Componentes e Receitas para `Admin`, `Manager` e `Team`; cadastro de Produtos, Precificação e Relatório de Custos para `Admin` e `Manager`; e vitrine pública para todos. Clientes e visitantes veem somente nome, descrição e ingredientes principais na vitrine.
+> A Fase 4 adiciona cadastro e gestão de Componentes e Receitas para `Admin`, `Manager` e `Team`; cadastro de Produtos, Precificação e Relatório de Custos para `Admin` e `Manager`; e vitrine pública para todos. Clientes e visitantes veem somente nome, descrição, características especiais e ingredientes principais na vitrine.
+> 
+> **Ajustes de UX da Fase 4 aplicados:**
+> - Custo total em tempo real nas telas de cadastro e edição de Componentes e Receitas;
+> - Listagem de produtos com botão "+ Novo Produto", coluna "Origem", coluna "Tipo", cabeçalho de ações centralizado e filtros inteligentes (Status, Origem, Tipo e Alerta de Custo);
+> - Formulário unificado de criação/edição de produtos com blocos ordenados, tabela de ingredientes inteligente (travada para origem Receita e livre para Personalizado com botões de adição) e bloco completo de Itens Extras;
+> - Tela de Detalhes do Produto sem valores de custo e sem itens extras, com composição de ingredientes limpa e características especiais em destaque;
+> - Vitrine pública exibindo características especiais (Sem Lactose, Sem Glúten, Vegano e especificações).
 
 ---
 
@@ -238,7 +245,7 @@ O preço sugerido usa margem padrão de 100% sobre o custo total. Os custos são
 - 🔐 **Autenticação e permissões** → em `docs/SDD-Fase2.md` e `docs/Fase2-Instrucoes.md`
 - 🍰 **Navegação pública e vitrine** → em `docs/SDD-Fase3.md` e `docs/Fase3-Instrucoes.md`
 - 🧁 **Receitas, precificação e produtos** → em `docs/SDD-Fase4.md` e `docs/Fase4-Instrucoes.md`
-- 🛠️ **Ajustes do fluxo da Fase 4** → em `docs/SDD-Fase4 - Ajuste e revisão.md` e `docs/Fase4-Ajustes-Instrucoes.md`
+- 🛠️ **Ajustes de UX e Fluxo da Fase 4** → em `docs/SDD-Fase4 — Ajustes de UX e Fluxo`, `docs/SDD-Fase4 - Ajuste e revisão.md` e `docs/Fase4-Ajustes-Instrucoes.md`
 - 📋 **Histórico de Requisitos** → em `docs/requisitos-fase1.md`
 
 ---

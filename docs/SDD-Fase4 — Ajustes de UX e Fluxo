@@ -1,0 +1,176 @@
+**Projeto:** ConfeitarIA
+**Versão:** 1.0 — Ajustes de Experiência e Fluxo
+**Data:** 16/11/2026
+
+>
+> 📚 **Documentos de Referência:** Consulte sempre `SDD-Fase4.md` e `SDD-Fase4 - Ajuste e revisão.md` para o modelo de dados e regras de negócio originais. Este documento contém **apenas os ajustes de interface, fluxo e comportamento** — sem repetir informações já definidas nos documentos base.
+>
+>
+> ⚠️ **REGRA FUNDAMENTAL:** Nenhuma funcionalidade das Fases 1, 2 e 3 será alterada. Aplicar apenas os ajustes descritos aqui. Sempre **crie e verifique migrations** quando houver alteração de estrutura de dados. O `README.md` na raiz do projeto está atualizado e deve ser consultado para visão geral do sistema.
+
+---
+
+## 1. 🎯 Objetivo
+
+Ajustar a experiência de usuário nas telas de **Componentes, Receitas Completas, Produtos e Detalhes do Produto**, melhorando fluxos, organização de informações, permissões e filtros, sem alterar regras de negócio já implementadas.
+
+---
+
+## 2. 🧩 Componentes e Receitas Completas — Custo em Tempo Real
+
+### 2.1 Onde aplicar
+
+- Tela de **Cadastro** e **Edição** de Componentes
+- Tela de **Cadastro** e **Edição** de Receitas Completas
+
+### 2.2 Comportamento
+
+- Adicionar campo **"Custo Total:"** alinhado à direita, acima dos botões de ação, ao lado do botão "Adicionar insumo"
+- Atualiza automaticamente ao: adicionar/remover item, alterar quantidade, alterar insumo/componente
+- Formato: `R$ 0,00` — em tempo real, sem precisar salvar
+- Sem itens: exibe `R$ 0,00`
+
+---
+
+## 3. 🏷️ Produtos — Listagem e Filtros
+
+### 3.1 Botão de Criação
+
+- Adicionar botão **"+ Novo Produto"** no canto superior direito — mesmo padrão visual usado em Receitas Completas
+
+### 3.2 Estrutura da Tabela
+
+| Coluna Anterior | Nova Estrutura  | Conteúdo                                                                         |
+| --------------- | --------------- | -------------------------------------------------------------------------------- |
+| Produto         | Produto         | Nome público + descrição curta                                                   |
+| Receita         | **Origem**      | `Receita — NomeDaReceita` ou `Personalizado`                                     |
+| *(nova)*        | **Tipo**        | `—` / Bolos / Sobremesas / Docinhos de Festa / Bolos Decorados / Massas Salgadas |
+| Status          | Status          | Ativo / Inativo                                                                  |
+| Alerta de custo | Alerta de custo | ⚠️ quando aplicável                                                              |
+| Ações           | Ações           | Cabeçalho **centralizado** — Detalhes / Editar / Inativar                        |
+
+### 3.3 Filtros Disponíveis
+
+- **Status:** Ativos / Inativos / Todos (padrão: Ativos)
+- **Origem:** Todos / da Receita / Personalizado (padrão: Todos)
+- **Tipo:** Todos / [lista de tipos] (padrão: Todos)
+- **Alerta de Custo:** Todos / Com alerta / Sem alerta (padrão: Todos)
+- Dispostos em linha abaixo do título da página
+
+---
+
+## 4. 🏷️ Produtos — Criar e Editar (Mesmo Formulário)
+
+### 4.1 Estrutura e Ordem dos Campos
+
+>
+> ✅ A mesma tela serve para **criar** e **editar** produtos. Campos somente leitura quando aplicável.
+
+| Ordem | Campo                         | Comportamento                                                                                        | Edição     | Criação    |
+| ----- | ----------------------------- | ---------------------------------------------------------------------------------------------------- | ---------- | ---------- |
+| 1     | **Origem**                    | `Receita — Nome` ou `Personalizado` — preenchido automaticamente                                     | 🔒 Leitura | 🔒 Leitura |
+| 2     | **Nome Público**              | Editável                                                                                             | ✅          | ✅          |
+| 3     | **Descrição Pública**         | Área de texto longa                                                                                  | ✅          | ✅          |
+| 4     | **Tipo de Produto**           | Dropdown: `—`, Bolos, Sobremesas, Docinhos de Festa, Bolos Decorados, Massas Salgadas — padrão = `—` | ✅          | ✅          |
+| 5     | **Especificações Adicionais** | Texto livre curto                                                                                    | ✅          | ✅          |
+| 6     | **Apresentar ao Público**     | Select: Sim / Não — padrão = Não                                                                     | ✅          | ✅          |
+| 7     | **Status**                    | Select: Ativo / Inativo — padrão = Ativo                                                             | ✅          | ✅          |
+| 8     | **Características Especiais** | Bloco organizado: ☐ Sem Lactose / ☐ Sem Glúten / ☐ Vegano                                            | ✅          | ✅          |
+| 9     | **Ingredientes e Principais** | Tabela: Insumo / Origem / Quantidade / ☐ Principal                                                   | Ver 4.2    | Ver 4.2    |
+| 10    | **Itens Extras**              | Tipo de item → seleção → quantidade → Adicionar                                                      | ✅          | ✅          |
+| 11    | Botões                        | Salvar / Cancelar                                                                                    | ✅          | ✅          |
+
+### 4.2 Tabela de Ingredientes — Comportamento Inteligente
+
+#### 🟡 Produto vindo de Receita (Origem ≠ Personalizado)
+
+- Lista é **preenchida automaticamente** com os insumos desdobrados da receita vinculada
+- Colunas: Insumo | Origem | Quantidade | ☐ Principal
+- ❌ Nome do insumo, origem e quantidade → **somente leitura**
+- ✅ Checkbox "Principal" → editável
+- Ao salvar → atualiza o campo `IngredientesPrincipais` concatenando os itens marcados
+
+#### 🟢 Produto Personalizado (Origem = Personalizado)
+
+- Lista inicia vazia
+- **Botões exclusivos — apenas na criação:**
+  - **"+ Adicionar Receita Completa"** → seletor → insere todos os insumos da receita
+  - **"+ Adicionar Componente"** → seletor → insere os insumos do componente
+- Todos os itens da tabela podem ter checkbox "Principal" marcado
+
+### 4.3 Itens Extras
+
+- Bloco disponível em criar **e** editar
+- Dropdown "Tipo de item": `Insumo cadastrado` / `Texto livre`
+- Insumo cadastrado → busca no cadastro, traz valor automaticamente
+- Texto livre → digita descrição + valor unitário manual
+- Quantidade → padrão = 1 → editável
+- Botão **"Adicionar"** → insere na lista com cálculo automático de custo
+
+### 4.4 Migração Necessária — Novos Campos na Tabela `produtos`
+
+>
+> ⚠️ **CRIE E VERIFIQUE A MIGRATION ANTES DE APLICAR**
+
+| Campo                       | Tipo           | Padrão  | Observação                                                                                        |
+| --------------------------- | -------------- | ------- | ------------------------------------------------------------------------------------------------- |
+| `tipo_produto`              | `VARCHAR(50)`  | `NULL`  | Valores permitidos: `bolos`, `sobremesas`, `docinhos-festa`, `bolos-decorados`, `massas-salgadas` |
+| `sem_lactose`               | `BOOLEAN`      | `false` | Característica especial                                                                           |
+| `sem_gluten`                | `BOOLEAN`      | `false` | Característica especial                                                                           |
+| `vegano`                    | `BOOLEAN`      | `false` | Característica especial                                                                           |
+| `especificacoes_adicionais` | `VARCHAR(150)` | `NULL`  | Texto livre complementar                                                                          |
+| `apresentar_ao_publico`     | `BOOLEAN`      | `false` | Controla exibição na vitrine pública                                                              |
+
+> ✅ Campos existentes mantidos: `nome_publico`, `descricao_publica`, `ingredientes_principais`, `ativo`
+
+---
+
+## 5. 👁️ Detalhes do Produto — Ajustes de Visualização
+
+### 5.1 Ocultar Bloco Itens Extras
+
+- ❌ Remover bloco "Itens Extras" da tela de detalhes — disponível apenas na edição/criação
+
+### 5.2 Composição da Receita — Sem Valores Monetários
+
+| Antes                                    | ✅ Agora                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Título: "Composição detalhada de custos" | Título: **"Composição da Receita"**                                                                                            |
+| Alerta sobre 80% do custo                | Texto informativo: *"Esta é a composição completa da receita, com todos os ingredientes e quantidades utilizados no preparo."* |
+| Coluna Valor Unitário                    | ❌ Removida                                                                                                                     |
+| Coluna Custo                             | ❌ Removida                                                                                                                     |
+| Colunas mantidas                         | Insumo / Origem / Quantidade                                                                                                   |
+
+5.3 Permissão dos Botões
+
+| Botão          | Admin / Manager       | Team     | Customer / Visitante  |
+| -------------- | --------------------- | -------- | --------------------- |
+| Editar Produto | ✅ Visível e funcional | ❌ Oculto | *(sem acesso à área)* |
+| Precificação   | ✅ Visível e funcional | ❌ Oculto | *(sem acesso à área)* |
+
+### 5.4 Exibição das Características Especiais
+
+- Abaixo da descrição pública, exibir bloco organizado:
+  - ✅ Sem Lactose
+  - ✅ Sem Glúten
+  - ✅ Vegano
+  - ✅ Especificações adicionais (quando preenchido)
+- Estas informações aparecem também na **vitrine pública** do produto
+
+---
+
+## 6. ✅ Critérios de Aceite — Resumo
+
+- Custo total atualiza em tempo real em Componentes e Receitas
+- Listagem de Produtos mostra coluna Origem e Tipo; cabeçalho Ações centralizado
+- Filtros: Status, Origem, Tipo, Alerta de Custo funcionam corretamente
+- Mesmo formulário cria e edita produtos; Origem correta conforme tipo
+- Tabela de ingredientes travada para produtos de receita; livre para personalizados
+- Botões de adicionar Receita/Componente aparecem apenas na criação de personalizado
+- Itens Extras funcionam em criar e editar
+- Detalhes não mostram Itens Extras nem valores de custo
+- Características especiais aparecem na tela de detalhes e na vitrine pública
+- Botões Editar e Precificação ocultos para perfil Team
+- **Migração criada e aplicada sem perda de dados existentes**
+- **Fases 1, 2 e 3 continuam 100% funcionando**
+- `README.md` consultado e atualizado se necessário
