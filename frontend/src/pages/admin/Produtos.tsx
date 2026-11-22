@@ -4,6 +4,7 @@ import {
   Box,
   Button,
   Chip,
+  IconButton,
   MenuItem,
   Paper,
   Stack,
@@ -13,12 +14,14 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
+import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
@@ -77,6 +80,33 @@ export function ProdutosListaPage() {
     }
   };
 
+  const ativar = async (produto: Produto) => {
+    setSaving(true);
+    setErrorAction(null);
+    try {
+      const payload: ProdutoFormData = {
+        nomePublico: produto.nomePublico,
+        descricaoPublica: produto.descricaoPublica ?? '',
+        ingredientesPrincipais: produto.ingredientesPrincipais ?? '',
+        tipoProduto: produto.tipoProduto ?? 'PADRAO',
+        especificacoesAdicionais: produto.especificacoesAdicionais ?? produto.especificacaoExtra ?? '',
+        especificacaoExtra: produto.especificacoesAdicionais ?? produto.especificacaoExtra ?? '',
+        semLactose: produto.semLactose,
+        semGluten: produto.semGluten,
+        vegano: produto.vegano,
+        apresentarAoPublico: produto.apresentarAoPublico,
+        ativo: true,
+        receitaCompletaId: produto.receitaCompletaId,
+      };
+      await fase4Service.atualizarProduto(produto.id, payload);
+      setVersion((current) => current + 1);
+    } catch (cause) {
+      setErrorAction(getApiErrorMessage(cause));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -90,7 +120,7 @@ export function ProdutosListaPage() {
               variant="contained"
               startIcon={<AddRoundedIcon />}
             >
-              + Novo Produto
+              Novo Produto
             </Button>
           ) : undefined
         }
@@ -217,37 +247,59 @@ export function ProdutosListaPage() {
                         )}
                       </TableCell>
                       <TableCell align="center">
-                        <Stack direction="row" spacing={1} justifyContent="center">
-                          <Button
-                            size="small"
-                            component={Link}
-                            to={`/admin/produtos/${produto.id}`}
-                            aria-label={`Abrir detalhes de ${produto.nomePublico}`}
-                            startIcon={<VisibilityOutlinedIcon />}
-                          >
-                            Detalhes
-                          </Button>
-                          {podeEditar && (
-                            <Button
-                              size="small"
+                        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                          <Tooltip title="Detalhes">
+                            <IconButton
+                              size="medium"
                               component={Link}
-                              to={`/admin/produtos/${produto.id}/editar`}
-                              aria-label={`Editar ${produto.nomePublico}`}
-                              startIcon={<EditOutlinedIcon />}
+                              to={`/admin/produtos/${produto.id}`}
+                              aria-label={`Abrir detalhes de ${produto.nomePublico}`}
+                              color="success"
+                              sx={{ color: '#2179fd'  }}
                             >
-                              Editar
-                            </Button>
+                              <VisibilityOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          {podeEditar && (
+                            <Tooltip title="Editar">
+                              <IconButton
+                                size="medium"
+                                component={Link}
+                                to={`/admin/produtos/${produto.id}/editar`}
+                                aria-label={`Editar ${produto.nomePublico}`}
+                                color="warning"
+                                sx={{ color: '#e69500' }}
+                              >
+                                <EditOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
                           )}
-                          {podeEditar && produto.ativo && (
-                            <Button
-                              size="small"
-                              color="warning"
-                              aria-label={`Inativar ${produto.nomePublico}`}
-                              startIcon={<BlockOutlinedIcon />}
-                              onClick={() => setAlvo(produto)}
-                            >
-                              Inativar
-                            </Button>
+                          {podeEditar && (
+                            produto.ativo ? (
+                              <Tooltip title="Inativar">
+                                <IconButton
+                                  size="medium"
+                                  color="error"
+                                  aria-label={`Inativar ${produto.nomePublico}`}
+                                  onClick={() => setAlvo(produto)}
+                                  sx={{ color: '#d32f2f' }}
+                                >
+                                  <PauseCircleOutlineRoundedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title="Ativar">
+                                <IconButton
+                                  size="medium"
+                                  color="success"
+                                  aria-label={`Ativar ${produto.nomePublico}`}
+                                  onClick={() => void ativar(produto)}
+                                  sx={{ color: '#2e7d32' }}
+                                >
+                                  <PlayCircleOutlineRoundedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )
                           )}
                         </Stack>
                       </TableCell>

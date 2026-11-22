@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Alert, Button, Chip, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
+import { Alert, Button, Chip, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import BlockOutlinedIcon from '@mui/icons-material/BlockOutlined';
+import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
+import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { PageHeader } from '../../components/common/PageHeader';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog';
@@ -74,6 +75,33 @@ export function ListaReceitasPage({ tipo }: { tipo: ReceitaTipo }) {
     }
   };
 
+  const ativar = async (item: Componente | ReceitaCompleta) => {
+    setSalvando(true);
+    setErroAcao(null);
+    try {
+      const payload = tipo === 'componente'
+        ? {
+            nome: item.nome,
+            descricao: item.descricao ?? '',
+            tempoPreparoMinutos: item.tempoPreparoMinutos,
+            ativo: true,
+          }
+        : {
+            nome: item.nome,
+            descricao: item.descricao ?? '',
+            tempoPreparoMinutos: item.tempoPreparoMinutos,
+            rendimento: (item as ReceitaCompleta).rendimento ?? '',
+            ativo: true,
+          };
+      await fase4Service.salvarReceita(tipo, payload, item.id);
+      setAtualizacao((count) => count + 1);
+    } catch (cause) {
+      setErroAcao(getApiErrorMessage(cause));
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   return (
     <>
       <PageHeader
@@ -100,7 +128,7 @@ export function ListaReceitasPage({ tipo }: { tipo: ReceitaTipo }) {
         {!loading && !error && Boolean(itens.length) && (
           <Paper sx={{ overflowX: 'auto', border: '1px solid #f0e7e0', borderRadius: 3 }}>
             <Table aria-label={`Lista de ${labels.plural.toLowerCase()}`}>
-              <TableHead><TableRow><TableCell>Nome</TableCell><TableCell>Tempo</TableCell><TableCell>Insumos</TableCell><TableCell>Custo</TableCell><TableCell>Status</TableCell><TableCell align="right">Ações</TableCell></TableRow></TableHead>
+              <TableHead><TableRow><TableCell>Nome</TableCell><TableCell>Tempo</TableCell><TableCell>Insumos</TableCell><TableCell>Custo</TableCell><TableCell>Status</TableCell><TableCell align="center">Ações</TableCell></TableRow></TableHead>
               <TableBody>
                 {itens.map((item) => (
                   <TableRow key={item.id} hover>
@@ -112,9 +140,46 @@ export function ListaReceitasPage({ tipo }: { tipo: ReceitaTipo }) {
                     <TableCell>{item.itens?.length ?? 0}</TableCell>
                     <TableCell>{formatCurrency(item.custoTotal ?? item.itens?.reduce((sum, ingrediente) => sum + ingrediente.custoItem, 0) ?? 0)}</TableCell>
                     <TableCell><Chip size="small" label={item.ativo ? 'Ativo' : 'Inativo'} color={item.ativo ? 'success' : 'default'} /></TableCell>
-                    <TableCell align="right">
-                      <IconButton aria-label={`Editar ${item.nome}`} component={Link} to={`${labels.route}/${item.id}/editar`}><EditOutlinedIcon /></IconButton>
-                      {item.ativo && <IconButton aria-label={`Inativar ${item.nome}`} color="warning" onClick={() => setAlvo(item)}><BlockOutlinedIcon /></IconButton>}
+                    <TableCell align="center">
+                      <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                        <Tooltip title="Editar">
+                          <IconButton
+                            aria-label={`Editar ${item.nome}`}
+                            component={Link}
+                            to={`${labels.route}/${item.id}/editar`}
+                            size="medium"
+                            color="warning"
+                            sx={{ color: '#e69500' }}
+                          >
+                            <EditOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {item.ativo ? (
+                          <Tooltip title="Inativar">
+                            <IconButton
+                              aria-label={`Inativar ${item.nome}`}
+                              color="error"
+                              size="medium"
+                              onClick={() => setAlvo(item)}
+                              sx={{ color: '#d32f2f' }}
+                            >
+                              <PauseCircleOutlineRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Ativar">
+                            <IconButton
+                              aria-label={`Ativar ${item.nome}`}
+                              color="success"
+                              size="medium"
+                              onClick={() => void ativar(item)}
+                              sx={{ color: '#2e7d32' }}
+                            >
+                              <PlayCircleOutlineRoundedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
