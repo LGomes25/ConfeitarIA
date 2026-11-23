@@ -167,6 +167,7 @@ export function ProdutoForm({
   const [extraErro, setExtraErro] = useState<string | null>(null);
 
   const isPersonalizado = !initialValue?.receitaCompletaId;
+  const isOrigemReceita = origemNome.startsWith('Receita — ');
 
   // Alterna o checkbox Principal de um ingrediente
   const togglePrincipal = (index: number) => {
@@ -389,14 +390,13 @@ export function ProdutoForm({
       vegano,
       ingredientesPrincipais: principaisText,
       receitaCompletaId: initialValue?.receitaCompletaId ?? null,
-      componentes: blocosOrigem
-        .filter((block) => block.tipo === 'receita'
-          ? !(initialValue?.receitaCompletaId && block.origemId === initialValue.receitaCompletaId)
-          : true)
-        .map((block, index) => block.tipo === 'receita'
-          ? { receitaCompletaId: block.origemId, ordem: index }
-          : { componenteId: block.origemId, ordem: index }),
-      itensExtras: itensExtrasPayload,
+      componentes: isOrigemReceita
+        ? undefined
+        : blocosOrigem
+          .map((block, index) => block.tipo === 'receita'
+            ? { receitaCompletaId: block.origemId, ordem: index }
+            : { componenteId: block.origemId, ordem: index }),
+      itensExtras: isOrigemReceita ? undefined : itensExtrasPayload,
     };
 
     onSubmit(formData);
@@ -519,29 +519,37 @@ export function ProdutoForm({
             </Typography>
           </div>
 
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            <Stack direction="row" spacing={1}>
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={<AddRoundedIcon />}
-                onClick={() => setDialogReceitaOpen(true)}
-              >
-                + Adicionar Receita Completa
-              </Button>
-              <Button
-                type="button"
-                variant="outlined"
-                size="small"
-                startIcon={<AddRoundedIcon />}
-                onClick={() => setDialogComponenteOpen(true)}
-              >
-                + Adicionar Componente
-              </Button>
+          {!isOrigemReceita && (
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Stack direction="row" spacing={1}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddRoundedIcon />}
+                  onClick={() => setDialogReceitaOpen(true)}
+                >
+                  + Adicionar Receita Completa
+                </Button>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AddRoundedIcon />}
+                  onClick={() => setDialogComponenteOpen(true)}
+                >
+                  + Adicionar Componente
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
+          )}
         </Box>
+
+        {isOrigemReceita && (
+          <Alert severity="info" sx={{ mb: 1.5 }}>
+            Este produto foi gerado automaticamente a partir de uma receita. A composição não pode ser alterada diretamente. Para modificar, edite a receita de origem.
+          </Alert>
+        )}
 
         {ingredientes.length === 0 ? (
           <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
@@ -570,7 +578,9 @@ export function ProdutoForm({
                   <Box
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: { xs: '1fr auto', sm: '1fr 110px 140px auto' },
+                      gridTemplateColumns: isOrigemReceita
+                        ? { xs: '1fr auto', sm: '1fr 110px 140px' }
+                        : { xs: '1fr auto', sm: '1fr 110px 140px auto' },
                       alignItems: 'center',
                       gap: 1,
                       px: 1.5,
@@ -594,13 +604,15 @@ export function ProdutoForm({
                     <Typography variant="body2" fontWeight={700} sx={{ color: 'primary.main', textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
                       {formatCurrency(subtotal)}
                     </Typography>
-                    <IconButton
-                      aria-label={`Remover bloco ${block.nome}`}
-                      color="error"
-                      onClick={() => removerBloco(block.id)}
-                    >
-                      <DeleteOutlineRoundedIcon />
-                    </IconButton>
+                    {!isOrigemReceita && (
+                      <IconButton
+                        aria-label={`Remover bloco ${block.nome}`}
+                        color="error"
+                        onClick={() => removerBloco(block.id)}
+                      >
+                        <DeleteOutlineRoundedIcon />
+                      </IconButton>
+                    )}
                   </Box>
                   <Collapse in={expanded}>
                     <Box sx={{ borderTop: '1px solid', borderColor: 'divider', px: 1.5, py: 1, bgcolor: 'action.hover' }}>
@@ -686,6 +698,7 @@ export function ProdutoForm({
 
         {extraErro && <Alert severity="error" sx={{ mb: 2 }}>{extraErro}</Alert>}
 
+        {!isOrigemReceita && (
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems="flex-start" sx={{ mb: 2 }}>
           <TextField
             select
@@ -757,6 +770,7 @@ export function ProdutoForm({
             Adicionar
           </Button>
         </Stack>
+        )}
 
         {itensExtras.length > 0 && (
           <Table size="small" aria-label="Tabela de itens extras">
@@ -785,14 +799,16 @@ export function ProdutoForm({
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      aria-label={`Remover item extra ${extra.nomeOuDescricao}`}
-                      onClick={() => removerItemExtra(idx)}
-                    >
-                      <DeleteOutlineRoundedIcon fontSize="small" />
-                    </IconButton>
+                    {!isOrigemReceita && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        aria-label={`Remover item extra ${extra.nomeOuDescricao}`}
+                        onClick={() => removerItemExtra(idx)}
+                      >
+                        <DeleteOutlineRoundedIcon fontSize="small" />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

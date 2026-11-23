@@ -155,6 +155,7 @@ npm run build
 - Os checkboxes de Ingrediente Principal têm marcação visual imediata dentro dos blocos de receitas/componentes e na tabela de Itens Extras
 - Tela de detalhes dos produtos possui botão Voltar, composição agrupada sem valores monetários e bloco de descrição/modo de preparo sem repetir receitas ou componentes duplicados
 - Nos blocos de Receita da composição, componentes internos são listados pelo nome antes dos insumos diretos da receita
+- Produtos gerados a partir de receitas bloqueiam inclusão/removal da composição e de itens extras na edição; o nome público continua editável e os checkboxes "Principal" permanecem ativos
 - Custo detalhado por insumo, análise Pareto 80/20, preço sugerido e alerta de variação de custo
 - Relatório de custos e preços somente para produtos vinculados a receitas, para `Admin` e `Manager`
 - Vitrine pública carregada da API, sem exposição de custos ou preços internos

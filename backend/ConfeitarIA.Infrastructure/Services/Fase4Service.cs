@@ -351,7 +351,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
         _db.Produtos.Add(produto);
         await _db.SaveChangesAsync(ct);
 
-        if (request.Componentes != null)
+        if (request.Componentes != null && produto.ReceitaCompletaId == null)
         {
             foreach (var c in request.Componentes)
             {
@@ -360,7 +360,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
             }
         }
 
-        if (request.ItensExtras != null)
+        if (request.ItensExtras != null && produto.ReceitaCompletaId == null)
         {
             foreach (var item in request.ItensExtras)
             {
@@ -390,7 +390,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
             request.SemGluten, request.Vegano, request.EspecificacoesAdicionais ?? request.EspecificacaoExtra,
             request.ApresentarAoPublico, request.TipoProduto);
 
-        if (request.Componentes != null)
+        if (request.Componentes != null && product.ReceitaCompletaId == null)
         {
             _db.ProdutoComponentes.RemoveRange(product.Componentes);
             foreach (var c in request.Componentes)
@@ -400,7 +400,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
             }
         }
 
-        if (request.ItensExtras != null)
+        if (request.ItensExtras != null && product.ReceitaCompletaId == null)
         {
             _db.ItensExtrasProduto.RemoveRange(product.ItensExtras);
             foreach (var item in request.ItensExtras)
