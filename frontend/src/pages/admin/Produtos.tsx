@@ -415,8 +415,9 @@ export function ProdutoFormPage() {
             const items: IngredienteItem[] = [];
             for (const link of produto.componentes ?? []) {
               if (link.receitaCompletaId) {
-                const recipe = (loadedReceitas as ReceitaCompleta[]).find((item) => item.id === link.receitaCompletaId);
-                if (!recipe) continue;
+                const recipeResumo = (loadedReceitas as ReceitaCompleta[]).find((item) => item.id === link.receitaCompletaId);
+                if (!recipeResumo) continue;
+                const recipe = await fase4Service.obterReceita('receita', recipeResumo.id) as ReceitaCompleta;
                 const blockId = `receita-${recipe.id}-${link.id}-${Date.now()}`;
                 for (const item of recipe.itens ?? []) {
                   if (item.insumoId && item.insumoNome) {
@@ -445,8 +446,9 @@ export function ProdutoFormPage() {
                   }
                 }
               } else if (link.componenteId) {
-                const component = (loadedComponentes as Componente[]).find((item) => item.id === link.componenteId);
-                if (!component) continue;
+                const componentResumo = (loadedComponentes as Componente[]).find((item) => item.id === link.componenteId);
+                if (!componentResumo) continue;
+                const component = await fase4Service.obterReceita('componente', componentResumo.id) as Componente;
                 const blockId = `componente-${component.id}-${link.id}-${Date.now()}`;
                 for (const item of component.itens ?? []) {
                   if (item.insumoId && item.insumoNome) {

@@ -32,6 +32,7 @@ import { TIPOS_PRODUTO } from '../../types/produto.types';
 import type { Insumo } from '../../types/insumo';
 import type { ReceitaCompleta } from '../../types/receitaCompleta.types';
 import type { Componente } from '../../types/componente.types';
+import { fase4Service } from '../../services/fase4Service';
 import { formatCurrency, formatCurrency5 } from '../../utils/format';
 
 export interface IngredienteItem {
@@ -204,13 +205,19 @@ export function ProdutoForm({
   };
 
   // Adiciona os insumos de uma Receita Completa (para produto personalizado)
-  const confirmarAdicionarReceita = () => {
+  const confirmarAdicionarReceita = async () => {
     const receita = receitasDisponiveis.find((r) => r.id === Number(receitaSelecionadaId));
     if (!receita) return;
+    let receitaCompleta = receita;
+    try {
+      receitaCompleta = await fase4Service.obterReceita('receita', receita.id) as ReceitaCompleta;
+    } catch {
+      // Mantém a receita resumida disponível caso o detalhe não esteja carregável.
+    }
 
     const blockId = `receita-${receita.id}-${Date.now()}`;
     const novosIngredientes: IngredienteItem[] = [];
-    for (const item of receita.itens ?? []) {
+    for (const item of receitaCompleta.itens ?? []) {
       if (item.insumoId && item.insumoNome) {
         novosIngredientes.push({
           insumoId: item.insumoId,
@@ -251,13 +258,19 @@ export function ProdutoForm({
   };
 
   // Adiciona os insumos de um Componente (para produto personalizado)
-  const confirmarAdicionarComponente = () => {
+  const confirmarAdicionarComponente = async () => {
     const comp = componentesDisponiveis.find((c) => c.id === Number(componenteSelecionadoId));
     if (!comp) return;
+    let componenteCompleto = comp;
+    try {
+      componenteCompleto = await fase4Service.obterReceita('componente', comp.id) as Componente;
+    } catch {
+      // Mantém os dados já disponíveis na lista.
+    }
 
     const blockId = `componente-${comp.id}-${Date.now()}`;
     const novosIngredientes: IngredienteItem[] = [];
-    for (const item of comp.itens ?? []) {
+    for (const item of componenteCompleto.itens ?? []) {
       if (item.insumoId && item.insumoNome) {
         novosIngredientes.push({
           insumoId: item.insumoId,
@@ -563,7 +576,36 @@ export function ProdutoForm({
               const expanded = Boolean(blocosExpandidos[block.id]);
               const subtotal = calcularSubtotalBloco(block);
               const liveInsumos = ingredientes.filter((item) => item.blockId === block.id);
-              const itemNames = liveInsumos.map((item) => item.nome).join(', ');
+              const componentesBloco = liveInsumos
+                .filter((item) => item.origem.startsWith('Componente — '))
+                .reduce<Array<{ nome: string; insumos: Array<{
+                  insumoId: number;
+                  nome: string;
+                  quantidade: string;
+                  isPrincipal: boolean;
+                }> }>>((grupos, item) => {
+                  const nome = item.origem.replace(/^Componente — /, '');
+                  let grupo = grupos.find((current) => current.nome === nome);
+                  if (!grupo) {
+                    grupo = { nome, insumos: [] };
+                    grupos.push(grupo);
+                  }
+                  grupo.insumos.push({
+                    insumoId: item.insumoId,
+                    nome: item.nome,
+                    quantidade: item.quantidade,
+                    isPrincipal: item.isPrincipal,
+                  });
+                  return grupos;
+                }, []);
+              const insumosDiretos = liveInsumos
+                .filter((item) => item.origem.startsWith('Receita — '))
+                .map((item) => ({
+                  insumoId: item.insumoId,
+                  nome: item.nome,
+                  quantidade: item.quantidade,
+                  isPrincipal: item.isPrincipal,
+                }));
               return (
                 <Box
                   key={block.id}
@@ -616,7 +658,90 @@ export function ProdutoForm({
                   </Box>
                   <Collapse in={expanded}>
                     <Box sx={{ borderTop: '1px solid', borderColor: 'divider', px: 1.5, py: 1, bgcolor: 'action.hover' }}>
-                      {liveInsumos.length > 0 ? (
+                      {block.tipo === 'receita' ? (
+                        <Stack spacing={1.5}>
+                          {componentesBloco.length > 0 && (
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.75 }}>
+                                Componentes
+                              </Typography>
+                              {componentesBloco.map((componente, componenteIndex) => (
+                                <Box key={`${componente.nome}-${componenteIndex}`} sx={{ mb: 1 }}>
+                                  <Typography variant="body2" fontWeight={700} sx={{ mb: 0.5 }}>
+                                    🧩 Componente — {componente.nome}
+                                  </Typography>
+                                  {componente.insumos.length > 0 ? (
+                                    <Table size="small" aria-label={`Insumos do componente ${componente.nome}`}>
+                                      <TableHead>
+                                        <TableRow>
+                                          <TableCell>Insumo</TableCell>
+                                          <TableCell align="right">Quantidade</TableCell>
+                                          <TableCell align="center">Principal</TableCell>
+                                        </TableRow>
+                                      </TableHead>
+                                      <TableBody>
+                                        {componente.insumos.map((item, index) => (
+                                          <TableRow key={`${componente.nome}-${item.insumoId}-${index}`}>
+                                            <TableCell>{item.nome}</TableCell>
+                                            <TableCell align="right">{item.quantidade}</TableCell>
+                                            <TableCell align="center">
+                                              <Checkbox
+                                                checked={item.isPrincipal}
+                                                onChange={() => togglePrincipalDoBloco(block.id, item.insumoId)}
+                                                aria-label={`Marcar ${item.nome} como principal`}
+                                              />
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  ) : (
+                                    <Typography variant="body2" color="text.secondary">
+                                      Nenhum insumo informado neste componente.
+                                    </Typography>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.75 }}>
+                              Insumos da Receita
+                            </Typography>
+                            {insumosDiretos.length > 0 ? (
+                              <Table size="small" aria-label={`Insumos da receita ${block.nome}`}>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>Insumo</TableCell>
+                                    <TableCell align="right">Quantidade</TableCell>
+                                    <TableCell align="center">Principal</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {insumosDiretos.map((item, index) => (
+                                    <TableRow key={`${item.insumoId}-${index}`}>
+                                      <TableCell>{item.nome}</TableCell>
+                                      <TableCell align="right">{item.quantidade}</TableCell>
+                                      <TableCell align="center">
+                                        <Checkbox
+                                          checked={item.isPrincipal}
+                                          onChange={() => togglePrincipalDoBloco(block.id, item.insumoId)}
+                                          aria-label={`Marcar ${item.nome} como principal`}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                Nenhum insumo direto informado nesta receita.
+                              </Typography>
+                            )}
+                          </Box>
+                        </Stack>
+                      ) : liveInsumos.length > 0 ? (
                         <Table size="small" aria-label={`Insumos de ${block.nome}`}>
                           <TableHead>
                             <TableRow>
@@ -644,11 +769,6 @@ export function ProdutoForm({
                       ) : (
                         <Typography variant="body2" color="text.secondary">
                           Nenhum insumo disponível neste bloco.
-                        </Typography>
-                      )}
-                      {itemNames && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                          {itemNames}
                         </Typography>
                       )}
                     </Box>
