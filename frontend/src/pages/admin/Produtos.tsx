@@ -546,6 +546,7 @@ export function ProdutoFormPage() {
 
 export function ProdutoDetalhePage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { sessao } = useAuth();
   const podeEditar =
     sessao?.usuario.perfis.some((role) => {
@@ -579,16 +580,25 @@ export function ProdutoDetalhePage() {
         title={produto.nomePublico}
         description={produto.descricaoPublica || 'Descrição pública não informada.'}
         action={
-          podeEditar ? (
-            <Stack direction="row" spacing={1} flexWrap="wrap">
-              <Button component={Link} to={`/admin/produtos/${produto.id}/editar`} variant="outlined">
-                Editar produto
-              </Button>
-              <Button component={Link} to={`/admin/produtos/${produto.id}/precificacao`} variant="contained">
-                Precificação
-              </Button>
-            </Stack>
-          ) : undefined
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Button
+              variant="outlined"
+              startIcon={<ArrowBackRoundedIcon />}
+              onClick={() => navigate('/admin/produtos')}
+            >
+              Voltar
+            </Button>
+            {podeEditar && (
+              <>
+                <Button component={Link} to={`/admin/produtos/${produto.id}/editar`} variant="outlined">
+                  Editar produto
+                </Button>
+                <Button component={Link} to={`/admin/produtos/${produto.id}/precificacao`} variant="contained">
+                  Precificação
+                </Button>
+              </>
+            )}
+          </Stack>
         }
       />
 
@@ -657,7 +667,7 @@ export function ProdutoDetalhePage() {
       </Paper>
 
       {/* 5.2 Composição da Receita — Sem Valores Monetários, Sem Itens Extras */}
-      <ComposicaoReceita produtoId={produto.id} />
+      <ComposicaoReceita produto={produto} />
     </Stack>
   );
 }
