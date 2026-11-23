@@ -348,7 +348,7 @@ export function ProdutoForm({
         value={tipoProduto}
         onChange={(event) => setTipoProduto(event.target.value)}
       >
-        <MenuItem value="">— (Nenhum tipo selecionado)</MenuItem>
+        <MenuItem value="">— (não definido)</MenuItem>
         {TIPOS_PRODUTO.map((t) => (
           <MenuItem key={t.value} value={t.value}>
             {t.label}

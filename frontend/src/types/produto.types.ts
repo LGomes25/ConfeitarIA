@@ -65,4 +65,7 @@ export const TIPOS_PRODUTO = [
   { value: 'docinhos-festa', label: 'Docinhos de Festa' },
   { value: 'bolos-decorados', label: 'Bolos Decorados' },
   { value: 'massas-salgadas', label: 'Massas Salgadas' },
+  { value: 'edicao-limitada', label: 'Edição Limitada' },
+  { value: 'combo', label: 'Combo' },
+  { value: 'outros', label: 'Outros' },
 ] as const;
