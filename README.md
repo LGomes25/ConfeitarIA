@@ -150,6 +150,9 @@ npm run build
 - Componentes reutilizáveis dentro de receitas completas, com insumos detalhados no custo
 - Produto criado automaticamente para cada receita completa; dados públicos editáveis sem cadastro manual
 - Ingredientes principais gerados por seleção, marcadores alimentares e controle de exibição pública (desativado por padrão)
+- Criação e edição de produtos com botão Voltar, popups com ações específicas e blocos colapsáveis independentes para receitas e componentes
+- Produtos personalizados permitem múltiplas receitas ou componentes na composição; cada bloco pode ser expandido, removido individualmente e possui checkbox de ingrediente principal
+- Os checkboxes de Ingrediente Principal têm marcação visual imediata dentro dos blocos de receitas/componentes e na tabela de Itens Extras
 - Custo detalhado por insumo, análise Pareto 80/20, preço sugerido e alerta de variação de custo
 - Relatório de custos e preços somente para produtos vinculados a receitas, para `Admin` e `Manager`
 - Vitrine pública carregada da API, sem exposição de custos ou preços internos

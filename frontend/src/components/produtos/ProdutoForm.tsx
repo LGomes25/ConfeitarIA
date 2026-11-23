@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,6 +24,8 @@ import {
 } from '@mui/material';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useState, type FormEvent } from 'react';
 import type { Produto, ProdutoFormData } from '../../types/produto.types';
 import { TIPOS_PRODUTO } from '../../types/produto.types';
@@ -38,6 +41,17 @@ export interface IngredienteItem {
   origem: string;
   quantidade: string;
   isPrincipal: boolean;
+  blockId?: string;
+  blockOrigemId?: number;
+}
+
+export interface OrigemBloco {
+  id: string;
+  tipo: 'receita' | 'componente';
+  origemId: number;
+  nome: string;
+  quantidade: number;
+  insumos: IngredienteItem[];
 }
 
 export interface ItemExtraLocal {
@@ -48,12 +62,12 @@ export interface ItemExtraLocal {
   valorUnitario: number;
   custoTotal: number;
   tipo: 'insumo' | 'livre';
+  isPrincipal: boolean;
 }
 
 export function ProdutoForm({
   initialValue,
   origemNome,
-  isCriacao,
   ingredientesIniciais = [],
   receitasDisponiveis = [],
   componentesDisponiveis = [],
@@ -65,7 +79,6 @@ export function ProdutoForm({
 }: {
   initialValue?: Produto;
   origemNome: string;
-  isCriacao: boolean;
   ingredientesIniciais?: IngredienteItem[];
   receitasDisponiveis?: ReceitaCompleta[];
   componentesDisponiveis?: Componente[];
@@ -95,20 +108,37 @@ export function ProdutoForm({
     if (ingredientesIniciais.length > 0) return ingredientesIniciais;
     return [];
   });
-
-  // Links para criação de produto personalizado
-  const [componentesLinks, setComponentesLinks] = useState<
-    Array<{ componenteId?: number; receitaCompletaId?: number; ordem: number }>
-  >(() => {
-    return (initialValue?.componentes ?? []).map((c) => ({
-      componenteId: c.componenteId ?? undefined,
-      receitaCompletaId: c.receitaCompletaId ?? undefined,
-      ordem: c.ordem,
-    }));
+  const [blocosOrigem, setBlocosOrigem] = useState<OrigemBloco[]>(() => {
+    const grouped = new Map<string, OrigemBloco>();
+    for (const item of ingredientesIniciais) {
+      if (!item.blockId) continue;
+      const blockId = item.blockId;
+      const existing = grouped.get(blockId);
+      if (existing) {
+        existing.insumos.push(item);
+      } else {
+        const tipo = item.origem.startsWith('Receita') ? 'receita' : 'componente';
+        grouped.set(blockId, {
+          id: blockId,
+          tipo,
+          origemId: item.blockOrigemId ?? 0,
+          nome: item.origem.replace(/^Receita — |^Componente — /, ''),
+          quantidade: 1,
+          insumos: [item],
+        });
+      }
+    }
+    return [...grouped.values()];
   });
 
   // 10. Itens Extras
   const [itensExtras, setItensExtras] = useState<ItemExtraLocal[]>(() => {
+    const principaisSet = new Set(
+      (initialValue?.ingredientesPrincipais ?? '')
+        .split(',')
+        .map((name) => name.trim().toLowerCase())
+        .filter(Boolean),
+    );
     return (initialValue?.itensExtras ?? []).map((extra) => ({
       id: extra.id,
       insumoId: extra.insumoId ?? undefined,
@@ -117,6 +147,7 @@ export function ProdutoForm({
       valorUnitario: extra.valorUnitario,
       custoTotal: extra.custoItem,
       tipo: extra.insumoId ? 'insumo' : 'livre',
+      isPrincipal: principaisSet.has((extra.insumoNome ?? extra.descricaoItem ?? '').trim().toLowerCase()),
     }));
   });
 
@@ -125,6 +156,7 @@ export function ProdutoForm({
   const [dialogComponenteOpen, setDialogComponenteOpen] = useState(false);
   const [receitaSelecionadaId, setReceitaSelecionadaId] = useState('');
   const [componenteSelecionadoId, setComponenteSelecionadoId] = useState('');
+  const [blocosExpandidos, setBlocosExpandidos] = useState<Record<string, boolean>>({});
 
   // Formulário para novo Item Extra
   const [tipoExtra, setTipoExtra] = useState<'insumo' | 'livre'>('insumo');
@@ -143,11 +175,39 @@ export function ProdutoForm({
     );
   };
 
+  const togglePrincipalDoBloco = (blockId: string, insumoId: number) => {
+    setIngredientes((current) =>
+      current.map((item) =>
+        item.blockId === blockId && item.insumoId === insumoId
+          ? { ...item, isPrincipal: !item.isPrincipal }
+          : item,
+      ),
+    );
+  };
+
+  const removerBloco = (blockId: string) => {
+    setBlocosOrigem((current) => current.filter((block) => block.id !== blockId));
+    setIngredientes((current) => current.filter((item) => item.blockId !== blockId));
+  };
+
+  const calcularSubtotalBloco = (block: OrigemBloco) => {
+    if (block.tipo === 'componente') {
+      const componente = componentesDisponiveis.find((item) => item.id === block.origemId);
+      const unitCost = componente
+        ? componente.custoTotal ?? (componente.itens ?? []).reduce((sum, item) => sum + (item.custoItem ?? 0), 0)
+        : 0;
+      return unitCost * block.quantidade;
+    }
+    const receita = receitasDisponiveis.find((item) => item.id === block.origemId);
+    return (receita?.custoTotal ?? 0) * block.quantidade;
+  };
+
   // Adiciona os insumos de uma Receita Completa (para produto personalizado)
   const confirmarAdicionarReceita = () => {
     const receita = receitasDisponiveis.find((r) => r.id === Number(receitaSelecionadaId));
     if (!receita) return;
 
+    const blockId = `receita-${receita.id}-${Date.now()}`;
     const novosIngredientes: IngredienteItem[] = [];
     for (const item of receita.itens ?? []) {
       if (item.insumoId && item.insumoNome) {
@@ -157,6 +217,8 @@ export function ProdutoForm({
           origem: `Receita — ${receita.nome}`,
           quantidade: `${item.quantidade} ${item.unidadeMedida ?? ''}`.trim(),
           isPrincipal: false,
+          blockId,
+          blockOrigemId: receita.id,
         });
       }
       for (const sub of item.itensComponente ?? []) {
@@ -167,16 +229,22 @@ export function ProdutoForm({
             origem: `Componente — ${item.componenteNome ?? receita.nome}`,
             quantidade: `${sub.quantidade} ${sub.unidadeMedida ?? ''}`.trim(),
             isPrincipal: false,
+            blockId,
+            blockOrigemId: receita.id,
           });
         }
       }
     }
 
     setIngredientes((current) => [...current, ...novosIngredientes]);
-    setComponentesLinks((current) => [
-      ...current,
-      { receitaCompletaId: receita.id, ordem: current.length },
-    ]);
+    setBlocosOrigem((current) => [...current, {
+      id: blockId,
+      tipo: 'receita',
+      origemId: receita.id,
+      nome: receita.nome,
+      quantidade: 1,
+      insumos: novosIngredientes,
+    }]);
     setReceitaSelecionadaId('');
     setDialogReceitaOpen(false);
   };
@@ -186,6 +254,7 @@ export function ProdutoForm({
     const comp = componentesDisponiveis.find((c) => c.id === Number(componenteSelecionadoId));
     if (!comp) return;
 
+    const blockId = `componente-${comp.id}-${Date.now()}`;
     const novosIngredientes: IngredienteItem[] = [];
     for (const item of comp.itens ?? []) {
       if (item.insumoId && item.insumoNome) {
@@ -195,15 +264,21 @@ export function ProdutoForm({
           origem: `Componente — ${comp.nome}`,
           quantidade: `${item.quantidade} ${item.unidadeMedida ?? ''}`.trim(),
           isPrincipal: false,
+          blockId,
+          blockOrigemId: comp.id,
         });
       }
     }
 
     setIngredientes((current) => [...current, ...novosIngredientes]);
-    setComponentesLinks((current) => [
-      ...current,
-      { componenteId: comp.id, ordem: current.length },
-    ]);
+    setBlocosOrigem((current) => [...current, {
+      id: blockId,
+      tipo: 'componente',
+      origemId: comp.id,
+      nome: comp.nome,
+      quantidade: 1,
+      insumos: novosIngredientes,
+    }]);
     setComponenteSelecionadoId('');
     setDialogComponenteOpen(false);
   };
@@ -231,6 +306,7 @@ export function ProdutoForm({
         valorUnitario: unitCost,
         custoTotal: qtd * unitCost,
         tipo: 'insumo',
+        isPrincipal: false,
       };
       setItensExtras((current) => [...current, novo]);
       setExtraInsumoId('');
@@ -251,6 +327,7 @@ export function ProdutoForm({
         valorUnitario: unitCost,
         custoTotal: qtd * unitCost,
         tipo: 'livre',
+        isPrincipal: false,
       };
       setItensExtras((current) => [...current, novo]);
       setExtraDescricao('');
@@ -263,15 +340,27 @@ export function ProdutoForm({
     setItensExtras((current) => current.filter((_, i) => i !== index));
   };
 
+  const togglePrincipalExtra = (index: number) => {
+    setItensExtras((current) =>
+      current.map((item, itemIndex) =>
+        itemIndex === index ? { ...item, isPrincipal: !item.isPrincipal } : item,
+      ),
+    );
+  };
+
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!nomePublico.trim()) return;
 
     // Concatena apenas os ingredientes marcados como Principais
-    const principaisText = ingredientes
-      .filter((i) => i.isPrincipal)
-      .map((i) => i.nome)
-      .join(', ');
+    const principaisText = [
+      ...ingredientes.filter((i) => i.isPrincipal).map((i) => i.nome),
+      ...itensExtras.filter((item) => item.isPrincipal).map((item) =>
+        item.tipo === 'insumo'
+          ? item.nomeOuDescricao.replace(/ \([^)]*\)$/, '')
+          : item.nomeOuDescricao,
+      ),
+    ].filter((name, index, names) => names.indexOf(name) === index).join(', ');
 
     // Formata itens extras para o payload da API
     const itensExtrasPayload = itensExtras.map((item) => {
@@ -300,7 +389,13 @@ export function ProdutoForm({
       vegano,
       ingredientesPrincipais: principaisText,
       receitaCompletaId: initialValue?.receitaCompletaId ?? null,
-      componentes: isPersonalizado ? componentesLinks : undefined,
+      componentes: blocosOrigem
+        .filter((block) => block.tipo === 'receita'
+          ? !(initialValue?.receitaCompletaId && block.origemId === initialValue.receitaCompletaId)
+          : true)
+        .map((block, index) => block.tipo === 'receita'
+          ? { receitaCompletaId: block.origemId, ordem: index }
+          : { componenteId: block.origemId, ordem: index }),
       itensExtras: itensExtrasPayload,
     };
 
@@ -424,8 +519,7 @@ export function ProdutoForm({
             </Typography>
           </div>
 
-          {/* Botões exclusivos na criação de produto personalizado */}
-          {isCriacao && isPersonalizado && (
+          <Stack direction="row" spacing={1} flexWrap="wrap">
             <Stack direction="row" spacing={1}>
               <Button
                 type="button"
@@ -446,7 +540,7 @@ export function ProdutoForm({
                 + Adicionar Componente
               </Button>
             </Stack>
-          )}
+          </Stack>
         </Box>
 
         {ingredientes.length === 0 ? (
@@ -456,32 +550,128 @@ export function ProdutoForm({
               : 'A receita de origem ainda não possui insumos.'}
           </Typography>
         ) : (
-          <Table size="small" aria-label="Ingredientes e principais">
-            <TableHead>
-              <TableRow>
-                <TableCell>Insumo</TableCell>
-                <TableCell>Origem</TableCell>
-                <TableCell>Quantidade</TableCell>
-                <TableCell align="center">Principal</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {ingredientes.map((item, index) => (
-                <TableRow key={`${item.insumoId}-${item.origem}-${index}`} hover>
-                  <TableCell>{item.nome}</TableCell>
-                  <TableCell>{item.origem}</TableCell>
-                  <TableCell>{item.quantidade}</TableCell>
-                  <TableCell align="center">
-                    <Checkbox
-                      checked={item.isPrincipal}
-                      onChange={() => togglePrincipal(index)}
-                      aria-label={`Marcar ${item.nome} como principal`}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <Stack spacing={1}>
+            {blocosOrigem.length > 0 ? blocosOrigem.map((block) => {
+              const expanded = Boolean(blocosExpandidos[block.id]);
+              const subtotal = calcularSubtotalBloco(block);
+              const liveInsumos = ingredientes.filter((item) => item.blockId === block.id);
+              const itemNames = liveInsumos.map((item) => item.nome).join(', ');
+              return (
+                <Box
+                  key={block.id}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: block.tipo === 'componente' ? 'rgba(184,115,51,0.45)' : 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    bgcolor: block.tipo === 'componente' ? 'rgba(184,115,51,0.04)' : 'background.paper',
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr auto', sm: '1fr 110px 140px auto' },
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 1.5,
+                      py: 1,
+                    }}
+                  >
+                    <Box
+                      onClick={() => setBlocosExpandidos((current) => ({ ...current, [block.id]: !expanded }))}
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', minWidth: 0 }}
+                    >
+                      {expanded
+                        ? <ExpandLessRoundedIcon fontSize="small" />
+                        : <ExpandMoreRoundedIcon fontSize="small" />}
+                      <Typography fontWeight={700} sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {block.tipo === 'componente' ? '🧩' : '📖'} {block.nome}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: { xs: 'right', sm: 'left' } }}>
+                      Quantidade: {block.quantidade}
+                    </Typography>
+                    <Typography variant="body2" fontWeight={700} sx={{ color: 'primary.main', textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
+                      {formatCurrency(subtotal)}
+                    </Typography>
+                    <IconButton
+                      aria-label={`Remover bloco ${block.nome}`}
+                      color="error"
+                      onClick={() => removerBloco(block.id)}
+                    >
+                      <DeleteOutlineRoundedIcon />
+                    </IconButton>
+                  </Box>
+                  <Collapse in={expanded}>
+                    <Box sx={{ borderTop: '1px solid', borderColor: 'divider', px: 1.5, py: 1, bgcolor: 'action.hover' }}>
+                      {liveInsumos.length > 0 ? (
+                        <Table size="small" aria-label={`Insumos de ${block.nome}`}>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Insumo</TableCell>
+                              <TableCell align="right">Quantidade</TableCell>
+                              <TableCell align="center">Principal</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {liveInsumos.map((item) => (
+                              <TableRow key={`${block.id}-${item.insumoId}`}>
+                                <TableCell>{item.nome}</TableCell>
+                                <TableCell align="right">{item.quantidade}</TableCell>
+                                <TableCell align="center">
+                                  <Checkbox
+                                    checked={item.isPrincipal}
+                                    onChange={() => togglePrincipalDoBloco(block.id, item.insumoId)}
+                                    aria-label={`Marcar ${item.nome} como principal`}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          Nenhum insumo disponível neste bloco.
+                        </Typography>
+                      )}
+                      {itemNames && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                          {itemNames}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Box>
+              );
+            }) : (
+              <Table size="small" aria-label="Ingredientes e principais">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Insumo</TableCell>
+                    <TableCell>Origem</TableCell>
+                    <TableCell>Quantidade</TableCell>
+                    <TableCell align="center">Principal</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {ingredientes.map((item, index) => (
+                    <TableRow key={`${item.insumoId}-${item.origem}-${index}`} hover>
+                      <TableCell>{item.nome}</TableCell>
+                      <TableCell>{item.origem}</TableCell>
+                      <TableCell>{item.quantidade}</TableCell>
+                      <TableCell align="center">
+                        <Checkbox
+                          checked={item.isPrincipal}
+                          onChange={() => togglePrincipal(index)}
+                          aria-label={`Marcar ${item.nome} como principal`}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Stack>
         )}
       </Paper>
 
@@ -576,6 +766,7 @@ export function ProdutoForm({
                 <TableCell>Quantidade</TableCell>
                 <TableCell>Valor Unitário</TableCell>
                 <TableCell>Custo Total</TableCell>
+                <TableCell align="center">Principal</TableCell>
                 <TableCell align="right">Ação</TableCell>
               </TableRow>
             </TableHead>
@@ -586,6 +777,13 @@ export function ProdutoForm({
                   <TableCell>{extra.quantidade}</TableCell>
                   <TableCell>{formatCurrency5(extra.valorUnitario)}</TableCell>
                   <TableCell>{formatCurrency(extra.custoTotal)}</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      checked={extra.isPrincipal}
+                      onChange={() => togglePrincipalExtra(idx)}
+                      aria-label={`Marcar ${extra.nomeOuDescricao} como principal`}
+                    />
+                  </TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
@@ -641,7 +839,7 @@ export function ProdutoForm({
         <DialogActions>
           <Button onClick={() => setDialogReceitaOpen(false)}>Cancelar</Button>
           <Button onClick={confirmarAdicionarReceita} variant="contained" disabled={!receitaSelecionadaId}>
-            Adicionar Insumos
+            Adicionar Receita
           </Button>
         </DialogActions>
       </Dialog>
@@ -674,7 +872,7 @@ export function ProdutoForm({
         <DialogActions>
           <Button onClick={() => setDialogComponenteOpen(false)}>Cancelar</Button>
           <Button onClick={confirmarAdicionarComponente} variant="contained" disabled={!componenteSelecionadoId}>
-            Adicionar Insumos
+            Adicionar Componente
           </Button>
         </DialogActions>
       </Dialog>

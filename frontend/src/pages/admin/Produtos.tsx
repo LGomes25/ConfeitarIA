@@ -18,6 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
@@ -376,6 +377,7 @@ export function ProdutoFormPage() {
             );
 
             const items: IngredienteItem[] = [];
+            const blockId = `receita-${produto.receitaCompletaId}-${Date.now()}`;
             for (const item of recipe.itens ?? []) {
               if (item.insumoId && item.insumoNome) {
                 items.push({
@@ -384,6 +386,8 @@ export function ProdutoFormPage() {
                   origem: `Receita — ${recipe.nome}`,
                   quantidade: `${item.quantidade} ${item.unidadeMedida ?? ''}`.trim(),
                   isPrincipal: principaisSet.has(item.insumoNome.toLowerCase()),
+                  blockId,
+                  blockOrigemId: produto.receitaCompletaId,
                 });
               }
               for (const sub of item.itensComponente ?? []) {
@@ -394,7 +398,68 @@ export function ProdutoFormPage() {
                     origem: `Componente — ${item.componenteNome ?? recipe.nome}`,
                     quantidade: `${sub.quantidade} ${sub.unidadeMedida ?? ''}`.trim(),
                     isPrincipal: principaisSet.has(sub.insumoNome.toLowerCase()),
+                    blockId,
+                    blockOrigemId: produto.receitaCompletaId,
                   });
+                }
+              }
+            }
+            setIngredients(items);
+          } else {
+            const principaisSet = new Set(
+              (produto.ingredientesPrincipais ?? '')
+                .split(',')
+                .map((n) => n.trim().toLowerCase())
+                .filter(Boolean),
+            );
+            const items: IngredienteItem[] = [];
+            for (const link of produto.componentes ?? []) {
+              if (link.receitaCompletaId) {
+                const recipe = (loadedReceitas as ReceitaCompleta[]).find((item) => item.id === link.receitaCompletaId);
+                if (!recipe) continue;
+                const blockId = `receita-${recipe.id}-${link.id}-${Date.now()}`;
+                for (const item of recipe.itens ?? []) {
+                  if (item.insumoId && item.insumoNome) {
+                    items.push({
+                      insumoId: item.insumoId,
+                      nome: item.insumoNome,
+                      origem: `Receita — ${recipe.nome}`,
+                      quantidade: `${item.quantidade} ${item.unidadeMedida ?? ''}`.trim(),
+                      isPrincipal: principaisSet.has(item.insumoNome.toLowerCase()),
+                      blockId,
+                      blockOrigemId: recipe.id,
+                    });
+                  }
+                  for (const sub of item.itensComponente ?? []) {
+                    if (sub.insumoId && sub.insumoNome) {
+                      items.push({
+                        insumoId: sub.insumoId,
+                        nome: sub.insumoNome,
+                        origem: `Componente — ${item.componenteNome ?? recipe.nome}`,
+                        quantidade: `${sub.quantidade} ${sub.unidadeMedida ?? ''}`.trim(),
+                        isPrincipal: principaisSet.has(sub.insumoNome.toLowerCase()),
+                        blockId,
+                        blockOrigemId: recipe.id,
+                      });
+                    }
+                  }
+                }
+              } else if (link.componenteId) {
+                const component = (loadedComponentes as Componente[]).find((item) => item.id === link.componenteId);
+                if (!component) continue;
+                const blockId = `componente-${component.id}-${link.id}-${Date.now()}`;
+                for (const item of component.itens ?? []) {
+                  if (item.insumoId && item.insumoNome) {
+                    items.push({
+                      insumoId: item.insumoId,
+                      nome: item.insumoNome,
+                      origem: `Componente — ${component.nome}`,
+                      quantidade: `${item.quantidade} ${item.unidadeMedida ?? ''}`.trim(),
+                      isPrincipal: principaisSet.has(item.insumoNome.toLowerCase()),
+                      blockId,
+                      blockOrigemId: component.id,
+                    });
+                  }
                 }
               }
             }
@@ -450,12 +515,21 @@ export function ProdutoFormPage() {
             ? 'Cadastre um novo produto com características, ingredientes e itens extras.'
             : 'Atualize os dados e a apresentação pública do produto.'
         }
+        action={
+          <Button
+            type="button"
+            variant="outlined"
+            startIcon={<ArrowBackRoundedIcon />}
+            onClick={() => navigate('/admin/produtos')}
+          >
+            Voltar
+          </Button>
+        }
       />
       <Paper sx={{ p: { xs: 2, sm: 3 }, border: '1px solid #f0e7e0', borderRadius: 3 }}>
         <ProdutoForm
           initialValue={productData ?? undefined}
           origemNome={origemNome}
-          isCriacao={isCriacao}
           ingredientesIniciais={ingredientes}
           receitasDisponiveis={receitas}
           componentesDisponiveis={componentes}

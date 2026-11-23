@@ -390,7 +390,7 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
             request.SemGluten, request.Vegano, request.EspecificacoesAdicionais ?? request.EspecificacaoExtra,
             request.ApresentarAoPublico, request.TipoProduto);
 
-        if (request.Componentes != null && product.ReceitaCompletaId == null)
+        if (request.Componentes != null)
         {
             _db.ProdutoComponentes.RemoveRange(product.Componentes);
             foreach (var c in request.Componentes)
