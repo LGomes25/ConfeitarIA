@@ -27,6 +27,13 @@ public sealed class PrecificacaoController(IPrecificacaoService service) : Contr
     public async Task<ActionResult<PrecificacaoDto>> Atualizar(int id, AtualizarPrecificacaoRequest request, CancellationToken ct) =>
         Ok(await service.AtualizarAsync(id, request, ct));
 
+    /// <summary>Lista o histórico dos últimos 12 meses da precificação do produto.</summary>
+    [HttpGet("precificacao/historico")]
+    [ProducesResponseType(typeof(IReadOnlyList<HistoricoPrecificacaoProdutoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IReadOnlyList<HistoricoPrecificacaoProdutoDto>> Historico(int id, CancellationToken ct) =>
+        service.HistoricoAsync(id, ct);
+
     /// <summary>Lista todos os insumos individuais e destaca o conjunto responsável por aproximadamente 80% do custo.</summary>
     [HttpGet("composicao-custo")]
     [ProducesResponseType(typeof(ComposicaoCustoDto), StatusCodes.Status200OK)]

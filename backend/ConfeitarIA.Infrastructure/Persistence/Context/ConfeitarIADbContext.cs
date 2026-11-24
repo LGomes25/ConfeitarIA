@@ -22,6 +22,7 @@ public class ConfeitarIADbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProdutoComponente> ProdutoComponentes => Set<ProdutoComponente>();
     public DbSet<ItemExtraProduto> ItensExtrasProduto => Set<ItemExtraProduto>();
     public DbSet<Precificacao> Precificacoes => Set<Precificacao>();
+    public DbSet<HistoricoPrecificacaoProduto> HistoricoPrecificacoesProdutos => Set<HistoricoPrecificacaoProduto>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

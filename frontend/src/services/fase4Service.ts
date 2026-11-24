@@ -5,6 +5,7 @@ import type { ItemExtraProduto, ItemExtraProdutoFormData } from '../types/itemEx
 import type { Produto, ProdutoFormData, ProdutoPublico, ProdutoComponente } from '../types/produto.types';
 import type { ComposicaoCusto } from '../types/analiseCusto.types';
 import type { Precificacao, PrecificacaoFormData, RelatorioCustoPreco } from '../types/precificacao.types';
+import type { HistoricoPrecificacaoProduto } from '../types/precificacao.types';
 
 type ReceitaTipo = 'componente' | 'receita';
 const rotaReceita = (tipo: ReceitaTipo) => tipo === 'componente' ? '/componentes' : '/receitas-completas';
@@ -87,6 +88,10 @@ export const fase4Service = {
   },
   async salvarPrecificacao(id: number, data: PrecificacaoFormData): Promise<Precificacao> {
     const response = await api.put<Precificacao>(`/produtos/${id}/precificacao`, data);
+    return response.data;
+  },
+  async listarHistoricoPrecificacao(id: number): Promise<HistoricoPrecificacaoProduto[]> {
+    const response = await api.get<HistoricoPrecificacaoProduto[]>(`/produtos/${id}/precificacao/historico`);
     return response.data;
   },
   async obterComposicaoCusto(id: number): Promise<ComposicaoCusto> {

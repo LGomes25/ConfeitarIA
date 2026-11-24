@@ -156,6 +156,8 @@ npm run build
 - Tela de detalhes dos produtos possui botão Voltar, composição agrupada sem valores monetários e bloco de descrição/modo de preparo sem repetir receitas ou componentes duplicados
 - Nos blocos de Receita da composição, componentes internos são listados pelo nome antes dos insumos diretos da receita
 - Produtos gerados a partir de receitas bloqueiam inclusão/removal da composição e de itens extras na edição; o nome público continua editável e os checkboxes "Principal" permanecem ativos
+- A tela de precificação inclui KPIs explicados, alerta inteligente de custo, tabela Pareto com top 5 e evolução histórica de custo, preço e margem por 12 meses
+- A precificação V2 agrupa mão de obra em bloco recolhível, mantém o preço sugerido próximo ao preço final e aplica feedback visual da margem sobre custo em tempo real
 - Em Criar e Editar Produto, os blocos de Receita exibem primeiro os componentes internos com seus nomes e insumos, seguidos dos insumos diretos da receita
 - Produtos personalizados carregam os detalhes completos de receitas e componentes ao montar os blocos, garantindo a visualização dos insumos internos
 - Custo detalhado por insumo, análise Pareto 80/20, preço sugerido e alerta de variação de custo

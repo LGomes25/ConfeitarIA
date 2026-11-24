@@ -51,4 +51,5 @@ public interface IPrecificacaoService
     Task<ComposicaoCustoDto?> ObterComposicaoAsync(int produtoId, CancellationToken ct);
     Task<IReadOnlyList<RelatorioCustoDto>> RelatorioAsync(bool? alerta, bool? margemAbaixoSugerida, CancellationToken ct);
     Task<byte[]> ExportarAsync(bool? alerta, bool? margemAbaixoSugerida, CancellationToken ct);
+    Task<IReadOnlyList<HistoricoPrecificacaoProdutoDto>> HistoricoAsync(int produtoId, CancellationToken ct);
 }

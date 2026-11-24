@@ -494,7 +494,43 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
         }
         pricing.AtualizarPrecoFinal(request.PrecoVendaFinal);
         await _db.SaveChangesAsync(ct);
+        _db.HistoricoPrecificacoesProdutos.Add(
+            new HistoricoPrecificacaoProduto(produtoId, pricing.CustoTotal, request.PrecoVendaFinal));
+        await _db.SaveChangesAsync(ct);
         return (await ObterAsync(produtoId, ct))!;
+    }
+
+    public async Task<IReadOnlyList<HistoricoPrecificacaoProdutoDto>> HistoricoAsync(int produtoId, CancellationToken ct)
+    {
+        if (!await _db.Produtos.AsNoTracking().AnyAsync(x => x.Id == produtoId, ct))
+            throw new EntityNotFoundException(nameof(Produto), produtoId);
+
+        var inicio = DateTime.UtcNow.AddMonths(-12);
+        var registros = await _db.HistoricoPrecificacoesProdutos.AsNoTracking()
+            .Where(x => x.ProdutoId == produtoId && x.DataRegistro >= inicio)
+            .OrderByDescending(x => x.DataRegistro).ThenByDescending(x => x.Id)
+            .ToListAsync(ct);
+
+        var recentesParaAntigos = registros;
+        var resultado = new List<HistoricoPrecificacaoProdutoDto>(registros.Count);
+        for (var index = 0; index < registros.Count; index++)
+        {
+            decimal? variacaoMargem = null;
+            if (index + 1 < registros.Count)
+            {
+                variacaoMargem = registros[index].MargemLucro - registros[index + 1].MargemLucro;
+                variacaoMargem = Math.Round(variacaoMargem.Value, 4, MidpointRounding.AwayFromZero);
+            }
+            resultado.Add(new HistoricoPrecificacaoProdutoDto(
+                registros[index].Id,
+                registros[index].ProdutoId,
+                new DateTimeOffset(DateTime.SpecifyKind(registros[index].DataRegistro, DateTimeKind.Utc)),
+                registros[index].CustoTotal,
+                registros[index].PrecoVendaFinal,
+                registros[index].MargemLucro,
+                variacaoMargem));
+        }
+        return resultado;
     }
 
     public async Task<ComposicaoCustoDto?> ObterComposicaoAsync(int produtoId, CancellationToken ct)

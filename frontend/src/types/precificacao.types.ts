@@ -35,3 +35,13 @@ export interface RelatorioCustoPreco {
   custoTotalAnterior: number | null;
   variacaoCustoPercentual: number | null;
 }
+
+export interface HistoricoPrecificacaoProduto {
+  id: number;
+  produtoId: number;
+  dataRegistro: string;
+  custoTotal: number;
+  precoVendaFinal: number;
+  margemLucro: number;
+  variacaoMargem: number | null;
+}

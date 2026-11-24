@@ -68,6 +68,46 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                     b.ToTable("componentes", (string)null);
                 });
 
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.HistoricoPrecificacaoProduto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("CustoTotal")
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("custo_total");
+
+                    b.Property<DateTime>("DataRegistro")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("data_registro")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<decimal>("MargemLucro")
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("margem_lucro");
+
+                    b.Property<decimal>("PrecoVendaFinal")
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("preco_venda_final");
+
+                    b.Property<int>("ProdutoId")
+                        .HasColumnType("integer")
+                        .HasColumnName("produto_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DataRegistro");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.ToTable("historico_precificacao_produtos", (string)null);
+                });
+
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.Insumo", b =>
                 {
                     b.Property<int>("Id")
@@ -867,6 +907,17 @@ namespace ConfeitarIA.Infrastructure.Persistence.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("ConfeitarIA.Domain.Entities.HistoricoPrecificacaoProduto", b =>
+                {
+                    b.HasOne("ConfeitarIA.Domain.Entities.Produto", "Produto")
+                        .WithMany()
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Produto");
                 });
 
             modelBuilder.Entity("ConfeitarIA.Domain.Entities.ItemExtraProduto", b =>
