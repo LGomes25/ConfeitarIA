@@ -8,6 +8,7 @@ import {
   TableHead,
   TableRow,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
@@ -44,7 +45,21 @@ export function InsumosTable({ insumos, onEdit, onChangeStatus }: InsumosTablePr
           <TableBody>
             {insumos.map((insumo) => (
               <TableRow key={insumo.id} hover>
-                <TableCell sx={{ fontWeight: 650 }}>{insumo.nome}</TableCell>
+                <TableCell>
+                  <Typography
+                    component={Link}
+                    to={`/insumos/${insumo.id}`}
+                    fontWeight={650}
+                    color="primary"
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    {insumo.nome}
+                  </Typography>
+                </TableCell>
                 <TableCell>{insumo.unidadeMedida}</TableCell>
                 <TableCell><StatusChip active={insumo.ativo} /></TableCell>
                 <TableCell>{formatCurrency5(insumo.custoUnitario ?? insumo.valorUnitarioAtual)}</TableCell>
