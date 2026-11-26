@@ -220,15 +220,20 @@ export function ProdutosListaPage() {
                   const tipoLabel =
                     TIPOS_PRODUTO.find((t) => t.value === produto.tipoProduto)?.label ?? '—';
                   const origemLabel = produto.receitaCompletaId
-                    ? `Receita — ${produto.receitaCompletaNome || 'Receita'}`
+                    ? 'Receita'
                     : 'Personalizado';
 
                   return (
                     <TableRow hover key={produto.id}>
-                      <TableCell>
-                        <Typography fontWeight={700}>{produto.nomePublico}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {produto.descricaoPublica || '—'}
+                      <TableCell sx={{ width: '28%', minWidth: 220 }}>
+                        <Typography
+                          component={Link}
+                          to={`/admin/produtos/${produto.id}`}
+                          fontWeight={700}
+                          color="primary"
+                          sx={{ cursor: 'pointer', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                        >
+                          {produto.nomePublico}
                         </Typography>
                       </TableCell>
                       <TableCell>{origemLabel}</TableCell>
@@ -242,7 +247,16 @@ export function ProdutosListaPage() {
                       </TableCell>
                       <TableCell>
                         {produto.alertaVariacaoPreco ? (
-                          <Chip size="small" color="warning" label="⚠️ Revisar preço" />
+                          <Chip
+                            size="small"
+                            label="⚠️ Revisar preço"
+                            sx={{
+                              bgcolor: 'rgba(245,185,66,0.18)',
+                              color: '#7a5708',
+                              border: '1px solid rgba(200,135,83,0.28)',
+                              fontWeight: 700,
+                            }}
+                          />
                         ) : (
                           '—'
                         )}

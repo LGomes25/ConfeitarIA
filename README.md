@@ -159,6 +159,7 @@ npm run build
 - A tela de precificação inclui KPIs explicados, alerta inteligente de custo, tabela Pareto com top 5 e evolução histórica de custo, preço e margem por 12 meses
 - A precificação V2 agrupa mão de obra em bloco recolhível, mantém o preço sugerido próximo ao preço final e aplica feedback visual da margem sobre custo em tempo real
 - Custos e Preços oferece ordenação em todas as colunas, tooltips explicativos, atualização da última precificação, indicadores por variação/margem e resumo automático dos filtros
+- Na lista de Produtos, o nome abre os detalhes ao ser clicado, a origem é resumida em “Receita” ou “Personalizado” e alertas de custo usam contraste amarelo suave
 - Na tabela de Custos e Preços, os cabeçalhos são compactados em duas linhas quando necessário e a margem sobre custo usa somente cor no texto
 - Em Criar e Editar Produto, os blocos de Receita exibem primeiro os componentes internos com seus nomes e insumos, seguidos dos insumos diretos da receita
 - Produtos personalizados carregam os detalhes completos de receitas e componentes ao montar os blocos, garantindo a visualização dos insumos internos
