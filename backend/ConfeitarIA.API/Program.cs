@@ -9,6 +9,7 @@ using ConfeitarIA.Infrastructure;
 using ConfeitarIA.Infrastructure.Persistence.Context;
 using ConfeitarIA.Infrastructure.Persistence.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -126,8 +127,19 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // Configuração de Controllers e Serialização
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+        options.JsonSerializerOptions.Converters.Add(new FlexibleDecimalJsonConverter()));
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var culturaPtBr = new System.Globalization.CultureInfo("pt-BR");
+    var culturaEnUs = new System.Globalization.CultureInfo("en-US");
+
+    options.DefaultRequestCulture = new RequestCulture(culturaPtBr);
+    options.SupportedCultures = new List<System.Globalization.CultureInfo> { culturaPtBr, culturaEnUs };
+    options.SupportedUICultures = new List<System.Globalization.CultureInfo> { culturaPtBr, culturaEnUs };
+});
 
 // Configuração do Swagger / OpenAPI
 builder.Services.AddSwaggerGen(options =>
@@ -178,6 +190,11 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+var opcoesLocalizacao = app.Services
+    .GetRequiredService<Microsoft.Extensions.Options.IOptions<RequestLocalizationOptions>>()
+    .Value;
+app.UseRequestLocalization(opcoesLocalizacao);
 
 // Middleware Global de Tratamento de Exceções (ProblemDetails RFC 7807)
 app.UseMiddleware<GlobalExceptionMiddleware>();

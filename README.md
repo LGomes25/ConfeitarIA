@@ -46,16 +46,25 @@ O ConfeitarIA é uma aplicação desenvolvida para substituir o controle manual 
 | **Fase 1** | Mantida | Gestão de insumos, histórico de compras, evolução de preços e importação de dados |
 | **Fase 2** | Mantida | Autenticação, usuários e permissões |
 | **Fase 3** | Implementada | Navegação pública, vitrine e estrutura de apresentação |
-| **Fase 4** | A definir | Cadastro de produtos e composição de custos |
+| **Fase 4** | **Concluída** | Componentes, receitas, produtos, precificação automática, alertas de variação e vitrine pública |
 | **Fase 5** | A definir | Pedidos, clientes e operação de vendas |
 | **Fase 6** | A definir | Painéis gerenciais, relatórios e integrações |
 
-> A Fase 3 adiciona navegação pública e acolhedora sem login obrigatório. Ao autenticar, a barra lateral é habilitada automaticamente para os perfis operacionais (`Admin`, `Manager` e `Team`) e permanece desabilitada para o perfil `Customer` e visitantes:
-> - **`Admin`:** Acesso total a Insumos, Compras, Gestão de Usuários e Meu Perfil (barra lateral habilitada).
-> - **`Manager`:** Acesso a Insumos, Compras e Meu Perfil (barra lateral habilitada).
-> - **`Team`:** Barra lateral habilitada com Meu Perfil; preparado para a futura página de Receitas (sem acesso a Insumos e Compras).
-> - **`Customer`:** Acesso ao Meu Perfil com navegação pública limpa (barra lateral sempre desabilitada).
-> - **Visitante (deslogado):** Acesso às páginas institucionais e vitrine (barra lateral sempre desabilitada).
+> A Fase 3 adiciona navegação pública e acolhedora sem login obrigatório. A barra lateral operacional é habilitada conforme o perfil:
+> - **`Admin`:** Acesso total, incluindo Insumos, Compras, gestão de usuários, Receitas, Produtos, Precificação e Relatórios.
+> - **`Manager`:** Acesso a Insumos, Compras, Receitas, Produtos, Precificação e Relatórios; sem gestão de usuários.
+> - **`Team`:** Acesso a Componentes, Receitas e consulta interna de Produtos; sem acesso a Insumos, Compras, cadastro de Produtos, Precificação ou Relatórios.
+> - **`Customer`:** Acesso ao Meu Perfil e às páginas públicas; vitrine somente leitura e sem barra lateral operacional.
+> - **Visitante (deslogado):** Acesso às páginas institucionais e à vitrine pública.
+>
+> A Fase 4 adiciona cadastro e gestão de Componentes e Receitas para `Admin`, `Manager` e `Team`; cadastro de Produtos, Precificação e Relatório de Custos para `Admin` e `Manager`; e vitrine pública para todos. Clientes e visitantes veem somente nome, descrição, características especiais e ingredientes principais na vitrine.
+> 
+> **Ajustes de UX da Fase 4 aplicados:**
+> - Custo total em tempo real nas telas de cadastro e edição de Componentes e Receitas;
+> - Listagem de produtos com botão "+ Novo Produto", coluna "Origem", coluna "Tipo", cabeçalho de ações centralizado e filtros inteligentes (Status, Origem, Tipo e Alerta de Custo);
+> - Formulário unificado de criação/edição de produtos com blocos ordenados, tabela de ingredientes inteligente (travada para origem Receita e livre para Personalizado com botões de adição) e bloco completo de Itens Extras;
+> - Tela de Detalhes do Produto sem valores de custo e sem itens extras, com composição de ingredientes limpa e características especiais em destaque;
+> - Vitrine pública exibindo características especiais (Sem Lactose, Sem Glúten, Vegano e especificações).
 
 ---
 
@@ -76,9 +85,9 @@ ConfeitarIA/
 │   ├── src/
 │   │   ├── components/                 # Layout, formulários, tabelas, gráfico e estados
 │   │   ├── hooks/                      # Hooks reutilizáveis
-│   │   ├── pages/                      # Insumos, compras e detalhes do insumo
+│   │   ├── pages/                      # Insumos, compras, receitas, produtos e relatórios
 │   │   ├── services/                   # Axios e chamadas à API
-│   │   ├── types/                      # Tipos de insumos, compras e gráfico
+│   │   ├── types/                      # Tipos de insumos, compras, receitas e produtos
 │   │   ├── utils/                      # Formatação de datas e valores
 │   │   ├── App.tsx                     # Rotas da aplicação
 │   │   └── theme.ts                    # Tema e paleta do MUI
@@ -87,7 +96,13 @@ ConfeitarIA/
 ├── docs/                               # Documentação técnica e especificações
 │   ├── SDD-Fase1.md                    # Especificação de Detalhamento de Software (Fase 1)
 │   ├── SDD-Fase2.md                    # Especificação de autenticação e permissões
-│   └── Fase2-Instrucoes.md              # Regras complementares da Fase 2
+│   ├── SDD-Fase3.md                    # Navegação pública e estrutura de apresentação
+│   ├── Fase2-Instrucoes.md             # Regras complementares da Fase 2
+│   ├── Fase3-Instrucoes.md             # Regras complementares da Fase 3
+│   ├── SDD-Fase4.md                    # Receitas, precificação e produtos
+│   ├── Fase4-Instrucoes.md             # Regras originais da Fase 4
+│   ├── SDD-Fase4 - Ajuste e revisão.md # Fluxo revisado de produtos e receitas
+│   └── Fase4-Ajustes-Instrucoes.md     # Ajustes complementares da Fase 4
 ├── README.md                           # Este arquivo
 └── .gitignore
 ```
@@ -130,6 +145,31 @@ npm run build
 - Cadastro e login por email ou telefone, perfil pessoal e endereços
 - Administração de usuários, perfis, bloqueios e senha temporária
 - Access/refresh tokens mantidos somente em memória no navegador
+- Cadastro e gestão de componentes e receitas completas para `Admin`, `Manager` e `Team`
+- Cadastro e montagem de produtos, itens extras e precificação para `Admin` e `Manager`
+- Componentes reutilizáveis dentro de receitas completas, com insumos detalhados no custo
+- Produto criado automaticamente para cada receita completa; dados públicos editáveis sem cadastro manual
+- Ingredientes principais gerados por seleção, marcadores alimentares e controle de exibição pública (desativado por padrão)
+- Criação e edição de produtos com botão Voltar, popups com ações específicas e blocos colapsáveis independentes para receitas e componentes
+- Produtos personalizados permitem múltiplas receitas ou componentes na composição; cada bloco pode ser expandido, removido individualmente e possui checkbox de ingrediente principal
+- Os checkboxes de Ingrediente Principal têm marcação visual imediata dentro dos blocos de receitas/componentes e na tabela de Itens Extras
+- Tela de detalhes dos produtos possui botão Voltar, composição agrupada sem valores monetários e bloco de descrição/modo de preparo sem repetir receitas ou componentes duplicados
+- Nos blocos de Receita da composição, componentes internos são listados pelo nome antes dos insumos diretos da receita
+- Produtos gerados a partir de receitas bloqueiam inclusão/removal da composição e de itens extras na edição; o nome público continua editável e os checkboxes "Principal" permanecem ativos
+- A tela de precificação inclui KPIs explicados, alerta inteligente de custo, tabela Pareto com top 5 e evolução histórica de custo, preço e margem por 12 meses
+- A precificação V2 agrupa mão de obra em bloco recolhível, mantém o preço sugerido próximo ao preço final e aplica feedback visual da margem sobre custo em tempo real
+- Custos e Preços oferece ordenação em todas as colunas, tooltips explicativos, atualização da última precificação, indicadores por variação/margem e resumo automático dos filtros
+- Na lista de Produtos, o nome abre os detalhes ao ser clicado, a origem é resumida em “Receita” ou “Personalizado” e alertas de custo usam contraste amarelo suave
+- Na lista de Insumos, o nome do insumo é clicável e abre a página de detalhes
+- Componentes e Receitas Completas possuem páginas de detalhes com nomes clicáveis, composição sem valores monetários e botões de voltar/editar
+- Nas páginas de detalhes de Componentes e Receitas, o Status possui espaçamento próprio para evitar sobreposição visual
+- Na tabela de Custos e Preços, os cabeçalhos são compactados em duas linhas quando necessário e a margem sobre custo usa somente cor no texto
+- Em Criar e Editar Produto, os blocos de Receita exibem primeiro os componentes internos com seus nomes e insumos, seguidos dos insumos diretos da receita
+- Produtos personalizados carregam os detalhes completos de receitas e componentes ao montar os blocos, garantindo a visualização dos insumos internos
+- Custo detalhado por insumo, análise Pareto 80/20, preço sugerido e alerta de variação de custo
+- Relatório de custos e preços somente para produtos vinculados a receitas, para `Admin` e `Manager`
+- Vitrine pública carregada da API, sem exposição de custos ou preços internos
+- Orçamentos de bolos decorados permanecem fora do escopo atual
 
 ---
 
@@ -202,12 +242,26 @@ Com a API em execução, o navegador abrirá automaticamente ou você poderá ac
 | `POST` | `/api/compras` | Registra compra vinculada com unidade de medida (valor unitário calculado no banco: `valor_total / quantidade`) |
 | `DELETE` | `/api/compras/{id}` | Exclui registro individual de compra (preserva o insumo) |
 
+## Funcionalidades e Perfis (Fase 4)
+
+| Tela / funcionalidade | Perfis |
+|---|---|
+| Componentes e Receitas Completas | `Admin`, `Manager`, `Team` |
+| Consulta interna de produtos e composição | `Admin`, `Manager`, `Team` |
+| Cadastro e edição de produtos | `Admin`, `Manager` |
+| Precificação, composição de custos e relatórios | `Admin`, `Manager` |
+| Vitrine pública (`/produtos`) | Todos; visitantes sem login |
+
+O preço sugerido usa margem padrão de 100% sobre o custo total. Os custos são recalculados a partir dos valores unitários mais recentes dos insumos; variações absolutas iguais ou superiores a 5% sinalizam revisão do preço de venda. A vitrine exibe somente produtos ativos com “Apresentar ao público” habilitado.
+
 ---
 
 ## Documentação Complementar
 - 📋 **Regras de Negócio e Modelo de Dados** → em `docs/SDD-Fase1.md`
 - 🔐 **Autenticação e permissões** → em `docs/SDD-Fase2.md` e `docs/Fase2-Instrucoes.md`
 - 🍰 **Navegação pública e vitrine** → em `docs/SDD-Fase3.md` e `docs/Fase3-Instrucoes.md`
+- 🧁 **Receitas, precificação e produtos** → em `docs/SDD-Fase4.md` e `docs/Fase4-Instrucoes.md`
+- 🛠️ **Ajustes de UX e Fluxo da Fase 4** → em `docs/SDD-Fase4 — Ajustes de UX e Fluxo`, `docs/SDD-Fase4 - Ajuste e revisão.md` e `docs/Fase4-Ajustes-Instrucoes.md`
 - 📋 **Histórico de Requisitos** → em `docs/requisitos-fase1.md`
 
 ---

@@ -1,19 +1,21 @@
 import {
   IconButton,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
 import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import type { Insumo } from '../../types/insumo';
-import { formatCurrency } from '../../utils/format';
+import { formatCurrency5 } from '../../utils/format';
 import { StatusChip } from '../common/StatusChip';
 import { EmptyState } from '../feedback/AsyncStates';
 import { Link } from 'react-router-dom';
@@ -37,50 +39,81 @@ export function InsumosTable({ insumos, onEdit, onChangeStatus }: InsumosTablePr
               <TableCell>Unidade</TableCell>
               <TableCell>Status</TableCell>
               <TableCell>Custo unitário atual</TableCell>
-              <TableCell align="right">Ações</TableCell>
+              <TableCell align="center">Ações</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {insumos.map((insumo) => (
               <TableRow key={insumo.id} hover>
-                <TableCell sx={{ fontWeight: 650 }}>{insumo.nome}</TableCell>
+                <TableCell>
+                  <Typography
+                    component={Link}
+                    to={`/insumos/${insumo.id}`}
+                    fontWeight={650}
+                    color="primary"
+                    sx={{
+                      cursor: 'pointer',
+                      textDecoration: 'none',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    {insumo.nome}
+                  </Typography>
+                </TableCell>
                 <TableCell>{insumo.unidadeMedida}</TableCell>
                 <TableCell><StatusChip active={insumo.ativo} /></TableCell>
-                <TableCell>{formatCurrency(insumo.custoUnitario ?? insumo.valorUnitarioAtual)}</TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Ver detalhes">
-                    <IconButton
-                      component={Link}
-                      to={`/insumos/${insumo.id}`}
-                      aria-label={`Ver detalhes de ${insumo.nome}`}
-                      size="small"
-                    >
-                      <OpenInNewRoundedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Editar">
-                    <IconButton
-                      onClick={() => onEdit(insumo)}
-                      aria-label={`Editar ${insumo.nome}`}
-                      size="small"
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title={insumo.ativo ? 'Inativar' : 'Reativar'}>
-                    <IconButton
-                      onClick={() => onChangeStatus(insumo)}
-                      aria-label={`${insumo.ativo ? 'Inativar' : 'Reativar'} ${insumo.nome}`}
-                      size="small"
-                      color={insumo.ativo ? 'default' : 'success'}
-                    >
-                      {insumo.ativo ? (
-                        <PauseCircleOutlineRoundedIcon fontSize="small" />
-                      ) : (
-                        <PlayCircleOutlineRoundedIcon fontSize="small" />
-                      )}
-                    </IconButton>
-                  </Tooltip>
+                <TableCell>{formatCurrency5(insumo.custoUnitario ?? insumo.valorUnitarioAtual)}</TableCell>
+                <TableCell align="center">
+                  <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                    <Tooltip title="Detalhes">
+                      <IconButton
+                        component={Link}
+                        to={`/insumos/${insumo.id}`}
+                        aria-label={`Ver detalhes de ${insumo.nome}`}
+                        size="medium"
+                        color="success"
+                        sx={{ color: '#2179fd'  }}
+                      >
+                        <VisibilityOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Editar">
+                      <IconButton
+                        onClick={() => onEdit(insumo)}
+                        aria-label={`Editar ${insumo.nome}`}
+                        size="medium"
+                        color="warning"
+                        sx={{ color: '#e69500' }}
+                      >
+                        <EditOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    {insumo.ativo ? (
+                      <Tooltip title="Inativar">
+                        <IconButton
+                          onClick={() => onChangeStatus(insumo)}
+                          aria-label={`Inativar ${insumo.nome}`}
+                          size="medium"
+                          color="error"
+                          sx={{ color: '#d32f2f' }}
+                        >
+                          <PauseCircleOutlineRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Ativar">
+                        <IconButton
+                          onClick={() => onChangeStatus(insumo)}
+                          aria-label={`Ativar ${insumo.nome}`}
+                          size="small"
+                          color="success"
+                          sx={{ color: '#2e7d32' }}
+                        >
+                          <PlayCircleOutlineRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
