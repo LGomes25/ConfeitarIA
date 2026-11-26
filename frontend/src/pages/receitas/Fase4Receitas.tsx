@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Alert, Button, Chip, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Chip, IconButton, MenuItem, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
 import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -133,8 +136,15 @@ export function ListaReceitasPage({ tipo }: { tipo: ReceitaTipo }) {
                 {itens.map((item) => (
                   <TableRow key={item.id} hover>
                     <TableCell>
-                      <Typography fontWeight={700}>{item.nome}</Typography>
-                      {tipo === 'receita' && <Typography variant="caption" color="text.secondary">{(item as ReceitaCompleta).rendimento || 'Rendimento não informado'}</Typography>}
+                      <Typography
+                        component={Link}
+                        to={`${labels.route}/${item.id}`}
+                        fontWeight={700}
+                        color="primary"
+                        sx={{ cursor: 'pointer', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                      >
+                        {item.nome}
+                      </Typography>
                     </TableCell>
                     <TableCell>{item.tempoPreparoMinutos ? `${item.tempoPreparoMinutos} min` : '—'}</TableCell>
                     <TableCell>{item.itens?.length ?? 0}</TableCell>
@@ -142,6 +152,17 @@ export function ListaReceitasPage({ tipo }: { tipo: ReceitaTipo }) {
                     <TableCell><Chip size="small" label={item.ativo ? 'Ativo' : 'Inativo'} color={item.ativo ? 'success' : 'default'} /></TableCell>
                     <TableCell align="center">
                       <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+                        <Tooltip title="Detalhes">
+                          <IconButton
+                            aria-label={`Ver detalhes de ${item.nome}`}
+                            component={Link}
+                            to={`${labels.route}/${item.id}`}
+                            size="medium"
+                            sx={{ color: '#2179fd' }}
+                          >
+                            <VisibilityOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Editar">
                           <IconButton
                             aria-label={`Editar ${item.nome}`}
@@ -343,3 +364,206 @@ export function ComponentesListaPage() { return <ListaReceitasPage tipo="compone
 export function ComponentesFormPage() { return <FormReceitaPage tipo="componente" />; }
 export function ReceitasCompletasListaPage() { return <ListaReceitasPage tipo="receita" />; }
 export function ReceitasCompletasFormPage() { return <FormReceitaPage tipo="receita" />; }
+
+export function ComponenteDetalhePage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [componente, setComponente] = useState<Componente | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    void fase4Service.obterReceita('componente', Number(id))
+      .then((value) => { if (active) setComponente(value as Componente); })
+      .catch((cause: unknown) => { if (active) setError(getApiErrorMessage(cause)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id]);
+
+  if (loading) return <LoadingState label="Carregando detalhes do componente..." />;
+  if (error || !componente) {
+    return <Alert severity="error">{error ?? 'Componente não encontrado.'}</Alert>;
+  }
+
+  return (
+    <Stack spacing={2.2}>
+      <PageHeader
+        title={componente.nome}
+        description="Detalhes de composição e modo de preparo do componente."
+        action={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate('/receitas/componentes')}>
+              Voltar
+            </Button>
+            <Button
+              component={Link}
+              to={`/receitas/componentes/${componente.id}/editar`}
+              variant="contained"
+              startIcon={<EditOutlinedIcon />}
+            >
+              Editar Componente
+            </Button>
+          </Stack>
+        }
+      />
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 1.5 }}>Informações Gerais</Typography>
+        <Stack spacing={1.2}>
+          <Box><Typography variant="caption" color="text.secondary">Nome</Typography><Typography fontWeight={700}>{componente.nome}</Typography></Box>
+          <Box><Typography variant="caption" color="text.secondary">Tempo de preparo</Typography><Typography>{componente.tempoPreparoMinutos ? `${componente.tempoPreparoMinutos} min` : 'Não informado'}</Typography></Box>
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>Status</Typography>
+            <Chip size="small" label={componente.ativo ? 'Ativo' : 'Inativo'} color={componente.ativo ? 'success' : 'default'} sx={{ ml: 0 }} />
+          </Box>
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 1.5 }}>Insumos utilizados neste componente</Typography>
+        {(componente.itens ?? []).length === 0 ? (
+          <Alert severity="info">Nenhum insumo cadastrado neste componente.</Alert>
+        ) : (
+          <Table size="small" aria-label="Insumos do componente">
+            <TableHead><TableRow><TableCell>Insumo</TableCell><TableCell align="right">Quantidade e Unidade</TableCell></TableRow></TableHead>
+            <TableBody>
+              {(componente.itens ?? []).filter((item) => item.insumoId).map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.insumoNome}</TableCell>
+                  <TableCell align="right">{item.quantidade} {item.unidadeMedida ?? ''}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 1.5 }}>Descrição e Modo de Preparo</Typography>
+        <Typography sx={{ whiteSpace: 'pre-wrap' }}>{componente.descricao || 'Nenhuma descrição ou modo de preparo informado.'}</Typography>
+      </Paper>
+    </Stack>
+  );
+}
+
+export function ReceitaCompletaDetalhePage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [receita, setReceita] = useState<ReceitaCompleta | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    void fase4Service.obterReceita('receita', Number(id))
+      .then((value) => { if (active) setReceita(value as ReceitaCompleta); })
+      .catch((cause: unknown) => { if (active) setError(getApiErrorMessage(cause)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id]);
+
+  if (loading) return <LoadingState label="Carregando detalhes da receita..." />;
+  if (error || !receita) {
+    return <Alert severity="error">{error ?? 'Receita completa não encontrada.'}</Alert>;
+  }
+
+  const componentes = (receita.itens ?? []).filter((item) => item.componenteId);
+  const insumosDiretos = (receita.itens ?? []).filter((item) => item.insumoId);
+
+  return (
+    <Stack spacing={2.2}>
+      <PageHeader
+        title={receita.nome}
+        description="Detalhes de rendimento, composição e modo de preparo da receita."
+        action={
+          <Stack direction="row" spacing={1}>
+            <Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => navigate('/receitas/completas')}>
+              Voltar
+            </Button>
+            <Button
+              component={Link}
+              to={`/receitas/completas/${receita.id}/editar`}
+              variant="contained"
+              startIcon={<EditOutlinedIcon />}
+            >
+              Editar Receita
+            </Button>
+          </Stack>
+        }
+      />
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 1.5 }}>Informações Gerais</Typography>
+        <Stack spacing={1.2}>
+          <Box><Typography variant="caption" color="text.secondary">Nome</Typography><Typography fontWeight={700}>{receita.nome}</Typography></Box>
+          <Box><Typography variant="caption" color="text.secondary">Rendimento</Typography><Typography>{receita.rendimento || 'Não informado'}</Typography></Box>
+          <Box><Typography variant="caption" color="text.secondary">Tempo de preparo</Typography><Typography>{receita.tempoPreparoMinutos ? `${receita.tempoPreparoMinutos} min` : 'Não informado'}</Typography></Box>
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.75 }}>Status</Typography>
+            <Chip size="small" label={receita.ativo ? 'Ativo' : 'Inativo'} color={receita.ativo ? 'success' : 'default'} sx={{ ml: 0 }} />
+          </Box>
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 0.5 }}>Composição da Receita</Typography>
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          Esta é a composição completa da receita, com todos os ingredientes e quantidades.
+        </Typography>
+
+        {componentes.length > 0 && (
+          <Stack spacing={1} sx={{ mb: 2 }}>
+            {componentes.map((item) => (
+              <Accordion key={item.id} disableGutters variant="outlined">
+                <AccordionSummary expandIcon={<ExpandMoreRoundedIcon />}>
+                  <Typography fontWeight={700}>🧩 {item.componenteNome ?? 'Componente'}</Typography>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 0, pt: 0 }}>
+                  {(item.itensComponente ?? []).length === 0 ? (
+                    <Typography px={2} py={1} color="text.secondary">Nenhum insumo informado neste componente.</Typography>
+                  ) : (
+                    <Table size="small" aria-label={`Insumos de ${item.componenteNome ?? 'componente'}`}>
+                      <TableHead><TableRow><TableCell>Insumo</TableCell><TableCell align="right">Quantidade</TableCell></TableRow></TableHead>
+                      <TableBody>
+                        {(item.itensComponente ?? []).map((sub) => (
+                          <TableRow key={sub.id}>
+                            <TableCell>{sub.insumoNome}</TableCell>
+                            <TableCell align="right">{sub.quantidade * item.quantidade} {sub.unidadeMedida ?? ''}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Stack>
+        )}
+
+        {insumosDiretos.length === 0 ? (
+          <Typography color="text.secondary">Nenhum insumo direto informado nesta receita.</Typography>
+        ) : (
+          <Table size="small" aria-label="Insumos diretos da receita">
+            <TableHead><TableRow><TableCell>Insumo</TableCell><TableCell align="right">Quantidade</TableCell></TableRow></TableHead>
+            <TableBody>
+              {insumosDiretos.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>{item.insumoNome}</TableCell>
+                  <TableCell align="right">{item.quantidade} {item.unidadeMedida ?? ''}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Paper>
+
+      <Paper sx={{ p: 2.5, border: '1px solid #f0e7e0', borderRadius: 3 }}>
+        <Typography variant="h2" sx={{ fontSize: 18, mb: 1.5 }}>Descrição e Modo de Preparo</Typography>
+        <Typography sx={{ whiteSpace: 'pre-wrap' }}>{receita.descricao || 'Nenhuma descrição ou modo de preparo informado.'}</Typography>
+      </Paper>
+    </Stack>
+  );
+}

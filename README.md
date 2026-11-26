@@ -161,6 +161,8 @@ npm run build
 - Custos e Preços oferece ordenação em todas as colunas, tooltips explicativos, atualização da última precificação, indicadores por variação/margem e resumo automático dos filtros
 - Na lista de Produtos, o nome abre os detalhes ao ser clicado, a origem é resumida em “Receita” ou “Personalizado” e alertas de custo usam contraste amarelo suave
 - Na lista de Insumos, o nome do insumo é clicável e abre a página de detalhes
+- Componentes e Receitas Completas possuem páginas de detalhes com nomes clicáveis, composição sem valores monetários e botões de voltar/editar
+- Nas páginas de detalhes de Componentes e Receitas, o Status possui espaçamento próprio para evitar sobreposição visual
 - Na tabela de Custos e Preços, os cabeçalhos são compactados em duas linhas quando necessário e a margem sobre custo usa somente cor no texto
 - Em Criar e Editar Produto, os blocos de Receita exibem primeiro os componentes internos com seus nomes e insumos, seguidos dos insumos diretos da receita
 - Produtos personalizados carregam os detalhes completos de receitas e componentes ao montar os blocos, garantindo a visualização dos insumos internos

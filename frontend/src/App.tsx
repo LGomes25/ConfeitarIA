@@ -48,6 +48,14 @@ const ReceitasCompletasFormPage = lazy(async () => {
   const module = await import('./pages/receitas/Fase4Receitas');
   return { default: module.ReceitasCompletasFormPage };
 });
+const ComponenteDetalhePage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ComponenteDetalhePage };
+});
+const ReceitaCompletaDetalhePage = lazy(async () => {
+  const module = await import('./pages/receitas/Fase4Receitas');
+  return { default: module.ReceitaCompletaDetalhePage };
+});
 const ProdutosListaPage = lazy(async () => {
   const module = await import('./pages/admin/Produtos');
   return { default: module.ProdutosListaPage };
@@ -110,9 +118,11 @@ function App() {
         <Route path="/compras" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ComprasPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/componentes" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesListaPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/componentes/novo" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/componentes/:id" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponenteDetalhePage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/componentes/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ComponentesFormPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/completas" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasListaPage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/completas/novo" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
+        <Route path="/receitas/completas/:id" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitaCompletaDetalhePage /></Suspense></ProtectedRoute>} />
         <Route path="/receitas/completas/:id/editar" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ReceitasCompletasFormPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/produtos" element={<ProtectedRoute perfis={['Admin', 'Manager', 'Team']}><Suspense fallback={<LoadingState />}><ProdutosListaPage /></Suspense></ProtectedRoute>} />
         <Route path="/admin/produtos/novo" element={<ProtectedRoute perfis={['Admin', 'Manager']}><Suspense fallback={<LoadingState />}><ProdutoFormPage /></Suspense></ProtectedRoute>} />
