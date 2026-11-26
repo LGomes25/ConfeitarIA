@@ -201,7 +201,8 @@ public sealed record ComposicaoCustoDto(int ProdutoId, string ProdutoNome, decim
 public sealed record RelatorioCustoDto(int ProdutoId, string NomePublico, decimal CustoTotal,
     decimal PrecoSugerido, decimal PrecoVendaFinal, decimal MargemRealSobreCusto,
     decimal MargemRealSobreVenda, decimal MargemSugeridaPercentual, bool AlertaVariacaoPreco,
-    decimal? CustoTotalAnterior, decimal? VariacaoCustoPercentual);
+    decimal? CustoTotalAnterior, decimal? VariacaoCustoPercentual,
+    DateTimeOffset? DataUltimaAtualizacao);
 
 /// <summary>Registro histórico de custo, preço e margem de um produto.</summary>
 public sealed record HistoricoPrecificacaoProdutoDto(int Id, int ProdutoId, DateTimeOffset DataRegistro,

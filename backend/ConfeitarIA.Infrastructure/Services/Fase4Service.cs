@@ -609,7 +609,8 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
                 x.Precificacao.MargemSugeridaPercentual,
                 x.Precificacao.AlertaVariacaoPreco,
                 x.Precificacao.CustoTotalAnterior,
-                x.Precificacao.VariacaoCustoPercentual
+                x.Precificacao.VariacaoCustoPercentual,
+                x.Precificacao.DataUltimaAtualizacao
             })
             .ToListAsync(ct);
 
@@ -624,7 +625,8 @@ public sealed class Fase4Service : IComponentesService, IReceitasCompletasServic
             x.MargemSugeridaPercentual,
             x.AlertaVariacaoPreco,
             x.CustoTotalAnterior,
-            x.VariacaoCustoPercentual))
+            x.VariacaoCustoPercentual,
+            ToOffset(x.DataUltimaAtualizacao)))
             .ToList();
     }
 

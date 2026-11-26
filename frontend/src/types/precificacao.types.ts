@@ -34,6 +34,7 @@ export interface RelatorioCustoPreco {
   alertaVariacaoPreco: boolean;
   custoTotalAnterior: number | null;
   variacaoCustoPercentual: number | null;
+  dataUltimaAtualizacao: string | null;
 }
 
 export interface HistoricoPrecificacaoProduto {
